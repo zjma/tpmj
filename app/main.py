@@ -1,13 +1,26 @@
-from flask import Flask
+import logging
+from flask import Flask,request,jsonify
+from Host import Host
+
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+
 app = Flask(__name__)
+host = Host()
 
-
-@app.route("/")
-def hello():
-    return "Hello World III from Flask in a uWSGI Nginx Docker container with \
-     Python 3.7"
-
-
+@app.route("/tpmj", methods=["POST"])
+def tpmj():
+	try:
+		req = request.get_json(force=True,silent=True)
+		if req == None: req = {}
+		response = host.Handle(req)
+		return jsonify(response)
+	except Exception as e:
+		# Log exception raised while handling the request.
+		logger.exception('Handling exception.')
+		return jsonify({'Processed':0})
+		
 if __name__ == "__main__":
     # Only for debugging while developing
     app.run(host='0.0.0.0', debug=True, port=80)
