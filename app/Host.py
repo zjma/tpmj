@@ -22,5 +22,26 @@ class Host:
 		
 		return ret
 	
+	def CheckWaitingStatus(self, request):
+		ret = {
+			'Matched'	:	1,
+			'GameId'	:	uuid4().hex,
+		}
+		return ret
+	
+	def GetGameState(self, request):
+		token = request['ParticipantToken']
+		game,role = self.participantToGameRole[token]
+		return game.GetStateForRole(role)
+	
+	def PerformGameAction(self, request):
+		token = request['ParticipantToken']
+		game,role = self.participantToGameRole[token]
+		action = request['GameAction']
+		accepted = game.PerformAction(role, action)
+		return {
+			'Accepted': 1
+		}
+		
 	def UnknownAction(self, request):
 		return {'Processed':0}
