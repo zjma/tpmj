@@ -1,0 +1,3 @@
+def testFoo():
+    assert False
+
