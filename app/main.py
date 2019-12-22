@@ -14,7 +14,7 @@ def tpmj():
 	try:
 		req = request.get_json(force=True,silent=True)
 		if req == None: req = {}
-		response = host.Handle(req)
+		response = host.handle(req)
 		return jsonify(response)
 	except Exception as e:
 		# Log exception raised while handling the request.
