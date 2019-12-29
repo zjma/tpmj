@@ -1,0 +1,16 @@
+{
+  "name": "tpmj-web-client",
+  "version": "0.0.1",
+  "description": "tpmj-web-client",
+  "author": "zjma <meshiadia@gmail.com>",
+  "license": "MIT",
+  "main": "app.js",
+  "keywords": [
+    "nodejs",
+    "bootstrap",
+    "express"
+  ],
+  "dependencies": {
+    "express": "^4.16.4"
+  }
+}
