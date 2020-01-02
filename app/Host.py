@@ -18,6 +18,7 @@ class Host:
 		assert type(request)==dict
 		action = request.get('Action', 'UnknownAction')
 		actionHandlerName = action[:1].lower() + action[1:]
+		logger.info(actionHandlerName)
 		ret = getattr(self, actionHandlerName)(request)
 		return ret
 
@@ -82,6 +83,10 @@ class Host:
 		}
 		self._gidToGameStateMap[gid] = newState
 		return ret
+
+	def randomObserve(self, request):
+		logger.info('@@@')
+		return {'Answer' : 'NotImplemented'}
 
 	def unknownAction(self, request):
 		return {'Processed':0}
