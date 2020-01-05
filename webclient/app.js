@@ -2,7 +2,7 @@ const express = require('express');
 const app = express();
 const router = express.Router();
 
-const path = __dirname + '/views/';
+const path = __dirname + '/assets/';
 const port = 8080;
 
 router.use(function (req,res,next) {
@@ -10,7 +10,7 @@ router.use(function (req,res,next) {
   next();
 });
 
-app.use(express.static(path));
+app.use('/assets', express.static(path));
 app.use('/', router);
 
 app.listen(port, function () {
