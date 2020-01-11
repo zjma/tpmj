@@ -90,7 +90,7 @@
     </v-app-bar>
 
     <v-content>
-      <HelloWorld/>
+      <HelloWorld :username="this.UserName"/>
     </v-content>
   </v-app>
 </template>
