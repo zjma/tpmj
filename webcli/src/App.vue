@@ -1,24 +1,7 @@
 <template>
   <v-app>
       <v-dialog v-model="ShowUserNameDialog" persistent max-width="600px">
-        <v-card>
-          <!-- <v-card-title>
-            <span class="headline">User ID</span>
-          </v-card-title> -->
-          <v-card-text>
-            <v-container>
-              <v-row>
-                <v-col cols="12">
-                  <v-text-field label="User name" v-model="UserName" required></v-text-field>
-                </v-col>
-              </v-row>
-            </v-container>
-          </v-card-text>
-          <v-card-actions>
-            <v-spacer></v-spacer>
-            <v-btn color="blue darken-1" text @click="onUserNameCollected()">Next</v-btn>
-          </v-card-actions>
-        </v-card>
+          <UserNameForm v-bind:DefaultUserName="UserName" v-on:UserNameCollected="onUserNameCollected" />
       </v-dialog>
       <v-dialog v-model="ShowModeDialog" persistent max-width="600px">
         <v-card>
@@ -97,12 +80,13 @@
 
 <script>
 import HelloWorld from './components/HelloWorld';
-
+import UserNameForm from './UserNameForm.vue';
 export default {
   name: 'App',
 
   components: {
     HelloWorld,
+    UserNameForm
   },
 
   data: () => ({
@@ -124,9 +108,6 @@ export default {
     }
   },
   methods: {
-    onUserNameCollected(){
-        this.State = 'UserSelectingMode'
-    },
     onBackPressed(){
         this.State = 'UserChoosingName'
     },
@@ -146,6 +127,11 @@ export default {
         }
     },
     onObserverWaitingCanceled(){
+        this.State = 'UserSelectingMode'
+    },
+    onUserNameCollected(arg){
+        window.console.log(arg);
+        this.UserName = arg
         this.State = 'UserSelectingMode'
     }
   }
