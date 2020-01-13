@@ -1,8 +1,6 @@
 <template>
   <v-app>
-      <v-dialog v-model="ShowUserNameDialog" persistent max-width="600px">
-          <UserNameForm v-bind:DefaultUserName="UserName" v-on:UserNameCollected="onUserNameCollected" />
-      </v-dialog>
+      <login-dialog :active="IsLoginDialogActive" :default-user-name="UserName" @finished="onLoginFinished" />
       <v-dialog v-model="ShowModeDialog" persistent max-width="600px">
         <v-card>
           <v-card-title>
@@ -80,23 +78,23 @@
 
 <script>
 import HelloWorld from './components/HelloWorld';
-import UserNameForm from './UserNameForm.vue';
+import LoginDialog from './LoginDialog.vue';
 export default {
   name: 'App',
 
   components: {
-    HelloWorld,
-    UserNameForm
+    'login-dialog':LoginDialog,
+    HelloWorld
   },
 
   data: () => ({
     UserName: 'NoName',
     Mode    : 'Play',
-    State   : 'UserChoosingName'
+    State   : 'UserLoggingIn'
   }),
   computed: {
-    ShowUserNameDialog: function(){
-        return this.State == 'UserChoosingName'
+    IsLoginDialogActive: function(){
+        return this.State == 'UserLoggingIn'
     },
 
     ShowModeDialog: function(){
@@ -109,7 +107,7 @@ export default {
   },
   methods: {
     onBackPressed(){
-        this.State = 'UserChoosingName'
+        this.State = 'UserLoggingIn'
     },
     onModeChosen(){
         if (this.Mode == 'Observe') {
@@ -129,9 +127,9 @@ export default {
     onObserverWaitingCanceled(){
         this.State = 'UserSelectingMode'
     },
-    onUserNameCollected(arg){
-        window.console.log(arg);
-        this.UserName = arg
+    onLoginFinished(userName){
+        window.console.log(userName);
+        this.UserName = userName
         this.State = 'UserSelectingMode'
     }
   }
