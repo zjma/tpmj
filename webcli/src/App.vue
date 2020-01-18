@@ -2,20 +2,7 @@
   <v-app>
       <login-dialog :active="IsLoginDialogActive" :default-user-name="UserName" @finished="onLoginFinished" />
       <mode-dialog :active="IsModeDialogActive" :default-mode="mode" @play-selected="onPlayModeSelected" @observe-selected="onObserveModeSelected" @cancelled="onModeSelectionCancelled" />
-      <!-- <observer-waiting-dialog :active="IsObserverWaitingDialogActive" @cancelled="onObserverWaitingCancelled" /> -->
-      <v-dialog v-model="ShowObserverWaitingDialog" persistent max-width="600px">
-        <v-card>
-          <v-card-title>
-            <span class="headline"></span>
-          </v-card-title>
-          <v-container>
-            Searching...
-          </v-container>
-          <v-card-actions>
-            <v-btn color="blue darken-1" text @click="onObserverWaitingCanceled()">Back</v-btn>
-          </v-card-actions>
-        </v-card>
-      </v-dialog>
+      <observer-waiting-dialog :active="IsObserverWaitingDialogActive" @cancelled="onObserverWaitingCancelled" @selected="onObservedGameSelected"/>
     <v-app-bar app color="primary" dark>
       <div class="d-flex align-center">
         <v-img
@@ -59,14 +46,14 @@
 import HelloWorld from './components/HelloWorld';
 import LoginDialog from './LoginDialog.vue';
 import ModeDialog from './ModeDialog.vue';
-// import ObserverWaitingDialog from './ObserverWaitingDialog.vue';
+import ObserverWaitingDialog from './ObserverWaitingDialog.vue';
 export default {
   name: 'App',
 
   components: {
     'login-dialog'              : LoginDialog,
     'mode-dialog'               : ModeDialog,
-    // 'observer-waiting-dialog'   : ObserverWaitingDialog,
+    'observer-waiting-dialog'   : ObserverWaitingDialog,
     HelloWorld
   },
 
@@ -84,45 +71,33 @@ export default {
         return this.State == 'UserSelectingMode'
     },
 
-    ShowObserverWaitingDialog: function(){
+    IsObserverWaitingDialogActive: function(){
         return this.State == 'ObserverWaitingForGame'
     }
   },
     methods: {
         onPlayModeSelected : function(){
-            this.mode = 'Play';
-            this.State = 'PlayerWaitingForMatch';
+            window.console.warn('Not implemented')
         },
         onObserveModeSelected : function(){
-            this.mode = 'Observe';
-            this.State = 'ObserverWaitingForGame';
+            this.mode = 'Observe'
+            this.State = 'ObserverWaitingForGame'
         },
         onModeSelectionCancelled : function(){
-            this.State = 'UserLoggingIn';
-        },
-        onModeChosen(){
-            if (this.Mode == 'Observe') {
-                this.State = 'ObserverWaitingForGame'
-                setInterval(function(){
-                    // this.$http.post('/tpmj',{Action:'GetObservableGameID'}).then(function(res){
-                    //     window.console.log(res.json);
-                    // },function(){
-                    //     window.console.log('Failed');
-                    // });
-                    window.console.log('Working.');
-                }, 1000)
-            } else {
-                this.State = 'UserSelectingMode'
-            }
-        },
-        onObserverWaitingCanceled(){
-            this.State = 'UserSelectingMode'
+            this.State = 'UserLoggingIn'
         },
         onLoginFinished(userName){
-            window.console.log(userName);
+            window.console.log(userName)
             this.UserName = userName
             this.State = 'UserSelectingMode'
+        },
+        onObserverWaitingCancelled(){
+            this.State = 'UserSelectingMode'
+        },
+        onObservedGameSelected(gameID){
+            window.console.log(gameID)
+            this.State = 'Observing'
         }
-    }
+    },
 };
 </script>

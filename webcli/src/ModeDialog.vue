@@ -36,7 +36,11 @@ export default {
             this.$emit('cancelled');
         },
         onNext : function(){
-
+            if (this.mode == 'Play') {
+                this.$emit('play-selected');
+            } else {
+                this.$emit('observe-selected');
+            }
         }
     }
 }
