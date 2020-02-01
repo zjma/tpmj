@@ -84,9 +84,8 @@ class Host:
 		self._gidToGameStateMap[gid] = newState
 		return ret
 
-	def randomObserve(self, request):
-		logger.info('@@@')
-		return {'Answer' : 'NotImplemented'}
+	def getObservableGame(self, request):
+		return {'GameID' : 'a1e9e3bf-8d2a-4602-ab6b-29b017d98d15'}
 
 	def unknownAction(self, request):
 		return {'Processed':0}

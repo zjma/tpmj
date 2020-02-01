@@ -95,7 +95,7 @@ export default {
             this.State = 'UserSelectingMode'
         },
         onObservedGameSelected(gameID){
-            window.console.log(gameID)
+            window.console.log("Starting to observe " + gameID + ".")
             this.State = 'Observing'
         }
     },

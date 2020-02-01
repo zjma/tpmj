@@ -49,7 +49,7 @@ export default {
             .then(response => {
                 var sub = response.data
                 window.console.log(sub)
-                if (sub.gameID) {
+                if (sub.GameID) {
                     this.$emit('selected',sub.gameID)
                 } else {
                     if (this.active) {
