@@ -97,6 +97,9 @@ def _draw(mountain):
     return new_mountain,draw
 
 def getGameStateView(gameState, role):
+    if role == -1:
+        return gameState
+
     if role in (0,1):
         return {
             'Role'          :   role,
@@ -104,6 +107,7 @@ def getGameStateView(gameState, role):
             'MyState'       :   gameState['PlayerStates'][role],
             'StateHint'     :   gameState['StateHint'],
         }
+
     assert False
 
 def getActionOptions(gameStateView):
@@ -163,6 +167,10 @@ def newGameState():
 
     return {
         'Mountain': mountain,
+        'Rivers': [
+            [],
+            [],
+        ],
         'PlayerStates':[
             {
                 'Hand':hands[0],

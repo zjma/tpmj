@@ -43,7 +43,11 @@ export function getRandomTriplet(){
 export function getRandomSequence(){
     var candidates = [...Array(27).keys()].filter(gid => gid%9<=6)
     var gid = candidates[Utils.randInt(0, candidates.length)]
-    return [gid,gid+1,gid+2].map(gid => gid*4+Utils.randInt(0,4)).map((tid) => ({IsValueVisible : true, Value : tid}))
+    var tids = [gid,gid+1,gid+2].map(gid => gid*4+Utils.randInt(0,4))
+    var tileViews = tids.map((tid) => ({IsValueVisible : true, Value : tid}))
+    Utils.shuffleArray(tileViews)
+    tileViews[Utils.randInt(0,3)].Rotated = true
+    return tileViews
 }
 
 export function getRandomSet(){

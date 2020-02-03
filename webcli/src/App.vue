@@ -37,7 +37,7 @@ export default {
         return {
             UserName            : 'NoName',
             mode                : 'Play',
-            State               : 'UserLoggingIn',
+            State               : 'Observing',
             MahjongTableContent : {
                 'Mountains': [
                     [...Array(38).keys()].map(getRandomTileView),

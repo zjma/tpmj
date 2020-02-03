@@ -2,7 +2,7 @@
     <div>
         <div v-for="(item,rowIdx) in Array(4)" :key="`riverrow-${rowIdx}`">
             <span v-for="(item,idx) in Array(6)" :key="`riverrow-${rowIdx}-leftgap-${idx}`"></span>
-            <span v-for="(item,colIdx) in Array(7)" :key="`riverrow-${rowIdx}-content-${colIdx}`">{{RiverRow[rowIdx][colIdx]}}</span>
+            <span v-for="(item,colIdx) in Array(7)" :key="`riverrow-${rowIdx}-content-${colIdx}`" :class="{rotate: IsRotatedTileView(RiverRow[rowIdx][colIdx])}">{{getViewString(RiverRow[rowIdx][colIdx])}}</span>
             <span v-for="(item,idx) in Array(6)" :key="`riverrow-${rowIdx}-rightgap-${idx}`"></span>
         </div>
         <div v-for="(item,rowIdx) in Array(2)" :key="`mountainrow-${rowIdx}`">
@@ -18,7 +18,7 @@
               <span></span>
           </div>
           <div class='built-sets-row'>
-              <span v-for="(item,idx) in SetRow" :key="`setrow-${idx}`">{{item}}</span>
+              <span v-for="(item,idx) in SetRow" :key="`setrow-${idx}`" :class="{rotate: IsRotatedTileView(item)}">{{getViewString(item)}}</span>
           </div>
     </div>
 </template>
@@ -58,17 +58,9 @@ export default {
             for (const [sid,builtSet] of this.data.BuiltSets.entries()) {
                 var sortedSetTileViews = [...builtSet]
 
-                sortedSetTileViews.sort(function(v0,v1){
-                    var x0 = (v0.IsValueVisible) ? v0.Value : -1
-                    var x1 = (v1.IsValueVisible) ? v1.Value : -1
-                    if (x0<x1) return -1
-                    if (x0>x1) return 1
-                    return 0
-                })
-
                 for (const tileView of sortedSetTileViews.reverse()) {
                     if (idx>=0) {
-                        ret[idx--] = this.getViewString(tileView)
+                        ret[idx--] = tileView
                     }
                 }
 
@@ -92,7 +84,7 @@ export default {
             return this.TileGroupChars[gid]
         },
         getRiverRow(rowID){
-            return [...Array(7).keys()].map(colID => this.getViewString(this.data.River[rowID*7+colID]))
+            return [...Array(7).keys()].map(colID => this.data.River[rowID*7+colID])
         },
         getMountainRow(rowIdx){
             return [...Array(19).keys()].map(colIdx => this.getViewString(this.data.Mountain[colIdx*2+rowIdx]))
@@ -108,6 +100,9 @@ export default {
                 return undefined;
             }
         },
+        IsRotatedTileView(tileView) {
+            return tileView && tileView.Rotated
+        }
     }
 }
 </script>
@@ -119,22 +114,23 @@ span {
     width: 16px;
     max-width: 16px;
 }
+
+div {
+    text-align: center;
+}
+
 .rotate {
     display: inline-block;
-    transform: rotate(-90deg);
-    -webkit-transform: rotate(-90deg);
-    -moz-transform: rotate(-90deg);
-    -ms-transform: rotate(-90deg);
-    -o-transform: rotate(-90deg);
+    transform: rotate(-270deg) translate(15%,-10.5%);
+    -webkit-transform: rotate(-270deg) translate(15%,-10.5%);
+    -moz-transform: rotate(-270deg) translate(15%,-10.5%);
+    -ms-transform: rotate(-270deg) translate(15%,-10.5%);
+    -o-transform: rotate(-270deg) translate(15%,-10.5%);
     filter: progid:DXImageTransform.Microsoft.BasicImage(rotation=3);
 }
 
-.NonExistingTile {
-    visibility: hidden;
+.mahjong-table {
+    font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans",sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol","Noto Color Emoji";
+    line-height: 1.5;
 }
-
-.foo {
-    font-size: 99px
-}
-
 </style>
