@@ -3,7 +3,7 @@
       <login-dialog :active="IsLoginDialogActive" :default-user-name="UserName" @finished="onLoginFinished" />
       <mode-dialog :active="IsModeDialogActive" :default-mode="mode" @play-selected="onPlayModeSelected" @observe-selected="onObserveModeSelected" @cancelled="onModeSelectionCancelled" />
       <observer-waiting-dialog :active="IsObserverWaitingDialogActive" @cancelled="onObserverWaitingCancelled" @selected="onObservedGameSelected"/>
-      <mahjong-table />
+      <mahjong-table :data="MahjongTableContent" />
   </v-app>
 </template>
 
@@ -13,20 +13,53 @@ import ModeDialog from './ModeDialog.vue';
 import ObserverWaitingDialog from './ObserverWaitingDialog.vue';
 import MahjongTable from './MahjongTable.vue';
 export default {
-  name: 'App',
+    name: 'App',
 
-  components: {
-    'login-dialog'              : LoginDialog,
-    'mode-dialog'               : ModeDialog,
-    'observer-waiting-dialog'   : ObserverWaitingDialog,
-    'mahjong-table'             : MahjongTable
-  },
+    components: {
+        'login-dialog'              : LoginDialog,
+        'mode-dialog'               : ModeDialog,
+        'observer-waiting-dialog'   : ObserverWaitingDialog,
+        'mahjong-table'             : MahjongTable
+    },
 
-  data: () => ({
-    UserName: 'NoName',
-    mode    : 'Play',
-    State   : 'UserLoggingIn'
-  }),
+    data: function() {
+        var getRandomTileView = function(){
+            if (Math.random()*3<1) {
+                return undefined
+            }
+
+            if (Math.random()*2<1) {
+                return {IsValueVisible:false}
+            }
+
+            return {IsValueVisible:true, Value: parseInt(Math.random()*136)}
+        }
+        return {
+            UserName            : 'NoName',
+            mode                : 'Play',
+            State               : 'UserLoggingIn',
+            MahjongTableContent : {
+                'Mountains': [
+                    [...Array(38).keys()].map(getRandomTileView),
+                    [...Array(38).keys()].map(getRandomTileView),
+                    [...Array(38).keys()].map(getRandomTileView),
+                    [...Array(38).keys()].map(getRandomTileView),
+                ],
+                'Rivers':[
+                    [...Array(28).keys()].map(getRandomTileView),
+                    [...Array(28).keys()].map(getRandomTileView),
+                    [...Array(28).keys()].map(getRandomTileView),
+                    [...Array(28).keys()].map(getRandomTileView),
+                ],
+                'PlayerStates':[
+                    {},
+                    {},
+                    {},
+                    {},
+                ]
+            },
+        }
+    },
   computed: {
     IsLoginDialogActive: function(){
         return this.State == 'UserLoggingIn'
