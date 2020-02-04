@@ -97,9 +97,6 @@ def _draw(mountain):
     return new_mountain,draw
 
 def getGameStateView(gameState, role):
-    if role == -1:
-        return gameState
-
     if role in (0,1):
         return {
             'Role'          :   role,
@@ -109,6 +106,177 @@ def getGameStateView(gameState, role):
         }
 
     assert False
+
+def getTileView(tid, isValueVisible):
+    return {
+        'IsValueVisible'    : isValueVisible,
+        'Value'             : tid,
+    }
+
+def getPlayerIdBySeat(seat):
+    '''
+    Player 0 and player 1 sit face to face.
+    '''
+    if seat == 0: return 0
+    if seat == 2: return 1
+    return None
+
+def getRiverView(gameState, seat):
+    assert seat in range(4)
+    pid = getPlayerIdBySeat(seat)
+    if pid==None: return []
+    return [getTileView(tid, True) for tid in gameState['Rivers'][pid]]
+
+def getPlayerAreaView(gameState, seat, viewer):
+    '''
+    Viewer looking at stuff for a given seat. What does it look like?
+    '''
+    return {
+        'River'     : [
+            {
+                'IsValueVisible'  : True,
+                'Value'           : 93,
+            },
+            {
+                'IsValueVisible'  : True,
+                'Value'           : 7,
+            },
+            {
+                'IsValueVisible'  : True,
+                'Value'           : 11,
+            },
+            {
+                'IsValueVisible'  : True,
+                'Value'           : 22,
+            },
+            {
+                'IsValueVisible'  : True,
+                'Value'           : 33,
+            },
+            {
+                'IsValueVisible'  : True,
+                'Value'           : 44,
+            },
+            {
+                'IsValueVisible'  : True,
+                'Value'           : 55,
+            },
+            {
+                'IsValueVisible'  : True,
+                'Value'           : 66,
+            },
+            {
+                'IsValueVisible'  : True,
+                'Value'           : 77,
+            },
+        ],
+        'Mountain'  : [
+            None,
+            None,
+            {'IsValueVisible' : False},
+            {'IsValueVisible' : False},
+            {'IsValueVisible' : False},
+            {'IsValueVisible' : False},
+            {'IsValueVisible' : False},
+            {'IsValueVisible' : False},
+            {'IsValueVisible' : False},
+            {'IsValueVisible' : False},
+            {'IsValueVisible' : False},
+            {'IsValueVisible' : False},
+            {'IsValueVisible' : False},
+            {'IsValueVisible' : False},
+            {'IsValueVisible' : False},
+            {'IsValueVisible' : False},
+            {'IsValueVisible' : False},
+            {'IsValueVisible' : False},
+            {'IsValueVisible' : False},
+            {'IsValueVisible' : False},
+            {'IsValueVisible' : False},
+            {'IsValueVisible' : False},
+            {'IsValueVisible' : False},
+            {'IsValueVisible' : False},
+            {'IsValueVisible' : False},
+            {'IsValueVisible' : False},
+            {'IsValueVisible' : False},
+            {'IsValueVisible' : False},
+            {'IsValueVisible' : False},
+            {'IsValueVisible' : False},
+            {'IsValueVisible' : False},
+            {'IsValueVisible' : False},
+            {'IsValueVisible' : False},
+            {'IsValueVisible' : False},
+            {'IsValueVisible' : False},
+            None,
+            None,
+            None,
+            None,
+            None,
+        ],
+        'OldHand'   : [
+            {'IsValueVisible' : True, 'Value' : 111},
+            {'IsValueVisible' : True, 'Value' : 111},
+            {'IsValueVisible' : True, 'Value' : 111},
+            {'IsValueVisible' : True, 'Value' : 111},
+            {'IsValueVisible' : True, 'Value' : 111},
+            {'IsValueVisible' : True, 'Value' : 111},
+            {'IsValueVisible' : True, 'Value' : 111},
+        ],
+        'NewHand'   : [
+            {'IsValueVisible' : True, 'Value' : 47},
+        ],
+        'BuiltSets' : [
+            [
+                {
+                    'IsValueVisible'    : True,
+                    'Value'             : 123,
+                },
+                {
+                    'IsValueVisible'    : True,
+                    'Value'             : 123,
+                },
+                {
+                    'IsValueVisible'    : True,
+                    'Value'             : 123,
+                    'Rotated'           : True,
+                },
+            ],
+            [
+                {
+                    'IsValueVisible'    : True,
+                    'Value'             : 34,
+                },
+                {
+                    'IsValueVisible'    : True,
+                    'Value'             : 35,
+                    'Rotated'           : True,
+                },
+                {
+                    'IsValueVisible'    : True,
+                    'Value'             : 36,
+                },
+            ],
+            [
+                {
+                    'IsValueVisible'    : True,
+                    'Value'             : 76,
+                    'Rotated'           : True,
+                },
+                {
+                    'IsValueVisible'    : True,
+                    'Value'             : 75,
+                },
+                {
+                    'IsValueVisible'    : True,
+                    'Value'             : 74,
+                },
+            ],
+        ],
+    }
+
+def getGameStateView2(gameState, role):
+    return {
+        'AreaViews' : [getPlayerAreaView(gameState, seat, role) for seat in range(4)],
+    }
 
 def getActionOptions(gameStateView):
     if gameStateView['StateHint']['Finished']: return []

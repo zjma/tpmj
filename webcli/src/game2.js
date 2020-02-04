@@ -92,6 +92,5 @@ export function randGameStateView() {
             randAreaData(),
             randAreaData(),
         ],
-        CurrentSeat: Utils.randInt(0,4),
     }
 }
