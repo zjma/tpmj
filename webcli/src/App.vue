@@ -3,15 +3,17 @@
       <login-dialog :active="IsLoginDialogActive" :default-user-name="UserName" @finished="onLoginFinished" />
       <mode-dialog :active="IsModeDialogActive" :default-mode="mode" @play-selected="onPlayModeSelected" @observe-selected="onObserveModeSelected" @cancelled="onModeSelectionCancelled" />
       <observer-waiting-dialog :active="IsObserverWaitingDialogActive" @cancelled="onObserverWaitingCancelled" @selected="onObservedGameSelected"/>
-      <mahjong-table :data="MahjongTableContent" />
+      <mahjong-table :gameStateView="gameStateView" :mySeat="mySeat" />
   </v-app>
 </template>
 
 <script>
-import LoginDialog from './LoginDialog.vue';
-import ModeDialog from './ModeDialog.vue';
-import ObserverWaitingDialog from './ObserverWaitingDialog.vue';
-import MahjongTable from './MahjongTable.vue';
+import * as Utils from './util.js'
+import * as Game2Util from './game2.js'
+import LoginDialog from './LoginDialog.vue'
+import ModeDialog from './ModeDialog.vue'
+import ObserverWaitingDialog from './ObserverWaitingDialog.vue'
+import MahjongTable from './MahjongTable.vue'
 export default {
     name: 'App',
 
@@ -19,45 +21,16 @@ export default {
         'login-dialog'              : LoginDialog,
         'mode-dialog'               : ModeDialog,
         'observer-waiting-dialog'   : ObserverWaitingDialog,
-        'mahjong-table'             : MahjongTable
+        'mahjong-table'             : MahjongTable,
     },
 
     data: function() {
-        var getRandomTileView = function(){
-            if (Math.random()*3<1) {
-                return undefined
-            }
-
-            if (Math.random()*2<1) {
-                return {IsValueVisible:false}
-            }
-
-            return {IsValueVisible:true, Value: parseInt(Math.random()*136)}
-        }
         return {
             UserName            : 'NoName',
             mode                : 'Play',
             State               : 'Observing',
-            MahjongTableContent : {
-                'Mountains': [
-                    [...Array(38).keys()].map(getRandomTileView),
-                    [...Array(38).keys()].map(getRandomTileView),
-                    [...Array(38).keys()].map(getRandomTileView),
-                    [...Array(38).keys()].map(getRandomTileView),
-                ],
-                'Rivers':[
-                    [...Array(28).keys()].map(getRandomTileView),
-                    [...Array(28).keys()].map(getRandomTileView),
-                    [...Array(28).keys()].map(getRandomTileView),
-                    [...Array(28).keys()].map(getRandomTileView),
-                ],
-                'PlayerStates':[
-                    {},
-                    {},
-                    {},
-                    {},
-                ]
-            },
+            mySeat              : Utils.randInt(0,4),
+            gameStateView       : Game2Util.randGameStateView(),
         }
     },
   computed: {

@@ -28,12 +28,6 @@ export function getRandomTileViewList(len){
     return [...Array(len).keys()].map(getRandomVisibleTileView)
 }
 
-export function getRandomHand(){
-    var candidates = [1, 4, 7, 10, 13]
-    var x = candidates[Utils.randInt(0, candidates.length)]
-    return [...Array(x).keys()].map(getRandomVisibleTileView)
-}
-
 export function getRandomTriplet(){
     var victimTid = randTid()
     var gid = Math.floor(victimTid/4)
@@ -77,4 +71,27 @@ export function getRandomMountain(){
     var tileCount = f1-f0
     var tileViews = [...Array(tileCount).keys()].map(() => ({IsValueVisible : false}))
     return Array(leftGapCount).concat(tileViews).concat(Array(rightGapCount))
+}
+
+export function randAreaData() {
+    var setCount = Utils.randInt(0, 5)
+    return {
+        River       : getRandomTileViewList(Math.floor(Math.random()*17)+5),
+        Mountain    : getRandomMountain(),
+        OldHand     : getRandomTileViewList((4-setCount)*3+1),
+        NewHand     : getRandomTileViewList(Math.floor(Math.random()*2)),
+        BuiltSets   : [...Array(setCount).keys()].map(getRandomSet),
+    }
+}
+
+export function randGameStateView() {
+    return {
+        AreaViews : [
+            randAreaData(),
+            randAreaData(),
+            randAreaData(),
+            randAreaData(),
+        ],
+        CurrentSeat: Utils.randInt(0,4),
+    }
 }

@@ -8,8 +8,6 @@
 </template>
 
 <script>
-import * as Utils from './util.js'
-import * as Game2Util from './game2.js'
 import PlayerArea from './PlayerArea.vue'
 export default {
     name : 'MahjongTable',
@@ -17,34 +15,23 @@ export default {
         'player-area'   :   PlayerArea,
     },
     props: {
-        data: Object
+        gameStateView   : Object,
+        mySeat          : Number,
     },
     computed: {
         oppoAreaData : function() {
-            return this.randAreaData()
+            return this.gameStateView.AreaViews[(this.mySeat+2)%4]
         },
         leftAreaData : function() {
-            return this.randAreaData()
+            return this.gameStateView.AreaViews[(this.mySeat+3)%4]
         },
         rightAreaData : function() {
-            return this.randAreaData()
+            return this.gameStateView.AreaViews[(this.mySeat+1)%4]
         },
         myAreaData : function() {
-            return this.randAreaData()
+            return this.gameStateView.AreaViews[(this.mySeat+0)%4]
         },
     },
-    methods: {
-        randAreaData() {
-            var setCount = Utils.randInt(0, 5)
-            return {
-                River       : Game2Util.getRandomTileViewList(Math.floor(Math.random()*17)+5),
-                Mountain    : Game2Util.getRandomMountain(),
-                OldHand     : Game2Util.getRandomTileViewList((4-setCount)*3+1),
-                NewHand     : Game2Util.getRandomTileViewList(Math.floor(Math.random()*2)),
-                BuiltSets   : [...Array(setCount).keys()].map(Game2Util.getRandomSet),
-            }
-        }
-    }
 }
 </script>
 
