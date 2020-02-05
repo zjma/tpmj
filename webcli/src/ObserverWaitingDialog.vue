@@ -45,7 +45,7 @@ export default {
         },
         requestObservableGames(){
             this.axios
-            .post('http://localhost/tpmj', {Action:'GetObservableGame'})
+            .post('http://localhost:8080/tpmj', {Action:'GetObservableGame'})
             .then(response => {
                 var sub = response.data
                 window.console.log(sub)
