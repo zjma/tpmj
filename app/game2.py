@@ -135,7 +135,7 @@ def getPlayerAreaView(gameState, seat, viewer):
         'River'     : [
             {
                 'IsValueVisible'  : True,
-                'Value'           : 93,
+                'Value'           : random.randint(0,135),
             },
             {
                 'IsValueVisible'  : True,

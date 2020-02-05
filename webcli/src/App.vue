@@ -36,20 +36,27 @@ export default {
             State               : 'Observing',
             mySeat              : Utils.randInt(0,4),
             gameStateView       : Game2Util.randGameStateView(),
+            counter             : 0,
         }
     },
 
-    created: function() {
-        this.axios
-        .post(process.env.VUE_APP_API_SERVER_URL, {Action:'GetGameState2',GameID:'qwer',RoleID:-1,})
-        .then(response => {
-            var sub = response.data
-            window.console.log(sub)
-            this.gameStateView = sub
-        })
-        .catch(function(error){
-            window.console.log(error)
-        })
+    mounted: function() {
+        const self = this
+        setInterval(function(){
+            if (!self.inProgress) {
+                self.inProgress = true
+                axios.post(process.env.VUE_APP_API_SERVER_URL, {Action:'GetGameState2',GameID:'qwer',RoleID:-1,})
+                .then(response => {
+                    var sub = response.data
+                    self.gameStateView = sub
+                    self.inProgress = false
+                })
+                .catch(function(error){
+                    window.console.log(error)
+                    self.inProgress = false
+                })
+            }
+        }, 1000)
     },
 
     computed: {
