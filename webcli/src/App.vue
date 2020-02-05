@@ -42,7 +42,7 @@ export default {
 
     created: function() {
         this.axios
-        .post('http://localhost/tpmj', {Action:'GetGameState2',GameID:'qwer',RoleID:-1,})
+        .post('http://localhost:8080/tpmj', {Action:'GetGameState2',GameID:'qwer',RoleID:-1,})
         .then(response => {
             var sub = response.data
             window.console.log(sub)
