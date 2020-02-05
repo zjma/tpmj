@@ -29,7 +29,6 @@ export default {
         'observer-waiting-dialog'   : ObserverWaitingDialog,
         'mahjong-table'             : MahjongTable,
     },
-
     data: function() {
         return {
             UserName            : 'NoName',
@@ -42,7 +41,7 @@ export default {
 
     created: function() {
         this.axios
-        .post('http://localhost:8080/tpmj', {Action:'GetGameState2',GameID:'qwer',RoleID:-1,})
+        .post(process.env.VUE_APP_API_SERVER_URL, {Action:'GetGameState2',GameID:'qwer',RoleID:-1,})
         .then(response => {
             var sub = response.data
             window.console.log(sub)
