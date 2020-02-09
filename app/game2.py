@@ -37,19 +37,17 @@ class Mountain:
         return attemptCount<999
     def draw(self):
         if len(self)==0: return None
-        assert self._ensureForwardCursorValid()
+        if not self._ensureForwardCursorValid(): return None
         i,j = self._forwardCursor
         result = self._tiles[i][j]
         self._tiles[i][j] = None
-        assert self._ensureForwardCursorValid()
         return result
     def drawFromBack(self):
         if len(self)==0: return None
-        assert self._ensureBackwardCursorValid()
+        if not self._ensureBackwardCursorValid(): return None
         i,j = self._backwordCursor
         result = self._tiles[i][j]
         self._tiles[i][j] = None
-        assert self._ensureBackwardCursorValid()
         return result
     def __len__(self):
         return len([x for x in (self._tiles[0]+self._tiles[2]) if x!=None])
@@ -117,6 +115,7 @@ class GameState:
         logger.info(f'OldState={self._state}')
         mainState = self._state.get('Main',None)
         try:
+            if action==None: return False
             if mainState == 'PlayerXHandleDraw':
                 if role==self._state.get('X',None):
                     seatID = self._getSeatIDByRole(role)
@@ -130,16 +129,47 @@ class GameState:
                             return True
             elif mainState == 'PlayerXToRespondToDiscard':
                 if role==self._state.get('X',None):
-                    if action.get('Type',None)=='Pass':
+                    seatID = self._getSeatIDByRole(role)
+                    oppoRole = 1-role
+                    oppoSeatID = self._getSeatIDByRole(oppoRole)
+                    actionType = action.get('Type',None)
+                    if actionType=='Pass':
+                        logger.info(f'RemainingMountainTileCount={len(self._mountain)}')
                         if len(self._mountain)>=1:
                             self._drawTile(self._getSeatIDByRole(role))
                             self._state = {'Main':'PlayerXHandleDraw','X':role}
                         else:
                             self._state = {'Main':'Finished'}
                         return True
+                    elif actionType=='Pon':
+                        if len(self._oldHand[seatID])<2: return False
+                        if len(self._river[oppoSeatID])<1: return False
+                        if len(self._builtSets[seatID])>=4: return False
+                        tid0 = self._river[oppoSeatID][-1]
+                        tgid = tid0 // 4
+                        candidates = [tile for tile in self._oldHand[seatID] if tile//4==tgid]
+                        if len(candidates)<2: return False
+                        tid1 = candidates[0]
+                        tid2 = candidates[1]
+                        self._buildSet(seatID,[tid0,tid1,tid2])
+                        self._state = {'Main':'PlayerXHandleDraw', 'X':role}
             return False
         finally:
             logger.info(f'NewState={self._state}')
+    def _buildSet(self, builderSeatID, tiles):
+        for tile in tiles:
+            self._removeTile(tile)
+        self._builtSets[builderSeatID].append(Set(tiles))
+    def _removeTile(self, tid):
+        '''
+        Remove a given tile from whatever hand/river it is in currently.
+        '''
+        for seatID in range(4):
+            self._removeIfExist(self._oldHand[seatID],tid)
+            self._removeIfExist(self._newHand[seatID],tid)
+            self._removeIfExist(self._river[seatID],tid)
+    def _removeIfExist(self, lst, val):
+        if val in lst: lst.remove(val)
     def _discardFromHandToRiver(self, seatID, fromOldHand, idx):
         assert seatID in [0,1,2,3]
         if fromOldHand:

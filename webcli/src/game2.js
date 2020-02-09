@@ -129,5 +129,9 @@ export function getActionPayload(userAction) {
             return {
                 Type : 'Pass',
             }
+        case 'PonClick':
+            return {
+                Type : 'Pon',
+            }
     }
 }

@@ -5,7 +5,10 @@
         <div v-for="(item,idx) in this.data.OldHand" :key="`oldhand-${idx}`" :style="getOldHandTileStyle(idx)" @click="onOldHandClick(idx)">{{getViewString(data.OldHand[idx])}}</div>
         <div v-for="(item,idx) in this.data.NewHand" :key="`newhand-${idx}`" :style="getNewHandTileStyle(idx)" @click="onNewHandClick(idx)" @mouseover="onMouseOverNewHand(idx)" @mouseout="onMouseOutNewHand(idx)">{{getViewString(data.NewHand[idx])}}</div>
         <built-set v-for="(item,idx) in this.data.BuiltSets" :key="`buildsets-${idx}`" :style="getBuiltSetStyle(idx)" @SetClick="onSetClick(idx)" @mouseover="onMouseOverSet(idx)" @mouseout="onMouseOutSet(idx)" :setData="item" :tileWidth="dims.tileWidth" :tileHeight="dims.tileHeight"/>
-        <v-btn outlined height="40px" :style="passButtonStyle" @click="onPassClick">Pass</v-btn>
+        <div style="position:absolute; top:200px; width:304px">
+            <v-btn text small height="40px" @click="onPassClick">Pass</v-btn>
+            <v-btn text small height="40px" @click="onPonClick">Pon</v-btn>
+        </div>
     </div>
 </template>
 
@@ -159,6 +162,12 @@ export default {
             window.console.log('onPassClick')
             this.$emit('UserAction', {
                 Type: 'PassClick',
+            })
+        },
+        onPonClick(){
+            window.console.log('onPassClick')
+            this.$emit('UserAction', {
+                Type: 'PonClick',
             })
         }
     }
