@@ -1,9 +1,9 @@
 <template>
-    <div class="mahjong-table">
-        <player-area class="opposite-area" :data="oppoAreaData" />
-        <player-area class="left-area" :data="leftAreaData" />
-        <player-area class="right-area" :data="rightAreaData" />
-        <player-area class="my-area" :data="myAreaData" />
+    <div class="MahjongTable">
+        <player-area class="opposite-area player-area" :data="oppoAreaData" :width="304" :height="200" @UserAction="onOppoAction($event)" />
+        <player-area class="left-area player-area" :data="leftAreaData" :width="304" :height="200" @UserAction="onLeftAction($event)" />
+        <player-area class="right-area player-area" :data="rightAreaData" :width="304" :height="200" @UserAction="onRightAction($event)" />
+        <player-area class="my-area player-area" :data="myAreaData" :width="304" :height="200" @UserAction="onSelfAction($event)" />
     </div>
 </template>
 
@@ -32,54 +32,152 @@ export default {
             return this.gameStateView.AreaViews[(this.mySeat+0)%4]
         },
     },
+    methods: {
+        onSelfAction: function(action){
+            window.console.log('Self action!')
+            window.console.log(action)
+            this.$emit('UserAction', {
+                Area: 'Self',
+                Action: action,
+            })
+        },
+        onOppoAction: function(action){
+            window.console.log('Oppo action!')
+            window.console.log(action)
+            this.$emit('UserAction', {
+                Area: 'Oppo',
+                Action: action,
+            })
+        },
+        onLeftAction: function(action){
+            window.console.log('Left action!')
+            window.console.log(action)
+            this.$emit('UserAction', {
+                Area: 'Left',
+                Action: action,
+            })
+        },
+        onRightAction: function(action){
+            window.console.log('Right action!')
+            window.console.log(action)
+            this.$emit('UserAction', {
+                Area: 'Right',
+                Action: action,
+            })
+        },
+    },
 }
 </script>
 
 <style>
-.my-area {
+.player-area {
     position: absolute;
-    top: 352px;
-    left: 144px;
-}
-.opposite-area {
-    position: absolute;
-    top: 0px;
-    left: 144px;
-    transform: rotate(-180deg);
-    -webkit-transform: rotate(-180deg);
-    -moz-transform: rotate(-180deg);
-    -ms-transform: rotate(-180deg);
-    -o-transform: rotate(-180deg);
-    filter: progid:DXImageTransform.Microsoft.BasicImage(rotation=2);
+    top: 500px;
+    left: 300px;
 }
 .left-area {
-    position: absolute;
-    top: 176px;
-    left: -32px;
+    transform-origin: 152px -70px;
     transform: rotate(90deg);
-    -webkit-transform: rotate(90deg);
-    -moz-transform: rotate(90deg);
-    -ms-transform: rotate(90deg);
-    -o-transform: rotate(90deg);
-    filter: progid:DXImageTransform.Microsoft.BasicImage(rotation=1);
+}
+.opposite-area {
+    transform-origin: 152px -70px;
+    transform: rotate(180deg);
 }
 .right-area {
-    position: absolute;
-    top: 176px;
-    left: 320px;
+    transform-origin: 152px -70px;
     transform: rotate(-90deg);
-    -webkit-transform: rotate(-90deg);
-    -moz-transform: rotate(-90deg);
-    -ms-transform: rotate(-90deg);
-    -o-transform: rotate(-90deg);
-    filter: progid:DXImageTransform.Microsoft.BasicImage(rotation=1);
 }
-.player {
-    font-size: 0;
-    width: 314px;
-    max-width: 314px;
-    height: 240px;
-    max-height: 240px;
-    text-align: center;
+.MahjongTable {
+    font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans",sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol","Noto Color Emoji";
+}
+.actionable:nth-child(10n+0) {
+    animation-name: blink;
+    animation-duration: 5s;
+    animation-delay: 0s;
+    animation-iteration-count: infinite;
+}
+.actionable:nth-child(10n+1) {
+    animation-name: blink;
+    animation-duration: 5s;
+    animation-delay: 0.1s;
+    animation-iteration-count: infinite;
+}
+.actionable:nth-child(10n+2) {
+    animation-name: blink;
+    animation-duration: 5s;
+    animation-delay: 0.2s;
+    animation-iteration-count: infinite;
+}
+.actionable:nth-child(10n+3) {
+    animation-name: blink;
+    animation-duration: 5s;
+    animation-delay: 0.3s;
+    animation-iteration-count: infinite;
+}
+.actionable:nth-child(10n+4) {
+    animation-name: blink;
+    animation-duration: 5s;
+    animation-delay: 0.4s;
+    animation-iteration-count: infinite;
+}
+.actionable:nth-child(10n+5) {
+    animation-name: blink;
+    animation-duration: 5s;
+    animation-delay: 0.5s;
+    animation-iteration-count: infinite;
+}
+.actionable:nth-child(10n+6) {
+    animation-name: blink;
+    animation-duration: 5s;
+    animation-delay: 0.6s;
+    animation-iteration-count: infinite;
+}
+.actionable:nth-child(10n+7) {
+    animation-name: blink;
+    animation-duration: 5s;
+    animation-delay: 0.7s;
+    animation-iteration-count: infinite;
+}
+.actionable:nth-child(10n+8) {
+    animation-name: blink;
+    animation-duration: 5s;
+    animation-delay: 0.8s;
+    animation-iteration-count: infinite;
+}
+.actionable:nth-child(10n+9) {
+    animation-name: blink;
+    animation-duration: 5s;
+    animation-delay: 0.9s;
+    animation-iteration-count: infinite;
+}
+
+.actionable:hover {
+    opacity: 0.5;
+    transform: translateX(0.1px) translateY(0.1px);
+}
+@keyframes blink {
+    20% {
+      opacity: 0.5;
+    }
+    40% {
+        opacity: 1.0;
+    }
+}
+@keyframes shake {
+  10%, 90% {
+    transform: translate3d(-1px, 0, 0);
+  }
+
+  20%, 80% {
+    transform: translate3d(2px, 0, 0);
+  }
+
+  30%, 50%, 70% {
+    transform: translate3d(-4px, 0, 0);
+  }
+
+  40%, 60% {
+    transform: translate3d(4px, 0, 0);
+  }
 }
 </style>

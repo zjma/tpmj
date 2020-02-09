@@ -14,9 +14,7 @@ host = Host()
 @app.route("/tpmj", methods=["POST"])
 def tpmj():
 	try:
-		logger.debug('yo')
 		req = request.get_json(force=True,silent=True)
-		logger.debug(req)
 		if req == None: req = {}
 		response = host.handle(req)
 		return jsonify(response)

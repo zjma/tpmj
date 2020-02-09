@@ -1,7 +1,7 @@
 from copy import deepcopy
 from uuid import uuid4
 from queue import deque
-import game2
+from game2 import GameState
 import logging
 
 logger = logging.getLogger(__name__)
@@ -18,7 +18,6 @@ class Host:
 		assert type(request)==dict
 		action = request.get('Action', 'UnknownAction')
 		actionHandlerName = action[:1].lower() + action[1:]
-		logger.info(actionHandlerName)
 		ret = getattr(self, actionHandlerName)(request)
 		return ret
 
@@ -72,22 +71,18 @@ class Host:
 	def getGameState2(self, request):
 		gid = request.get('GameID', None)
 		role = request.get('RoleID', None)
-		gameState = self._gidToGameStateMap.get(gid, None)
-		return game2.getGameStateView2(gameState, role)
-		
+		gameState = self._gidToGameStateMap[gid] if gid in self._gidToGameStateMap else self._gidToGameStateMap.setdefault(gid, GameState())
+		return gameState.getStateView(role)
+
 	def performGameAction(self, request):
-		logger.debug(request)
-		playerToken = request.get('PlayerToken', None)
-		if playerToken not in self._playerToGidAndRoleMap:
-			return {}
-		gid,role = self._playerToGidAndRoleMap[playerToken]
-		gameState = self._gidToGameStateMap[gid]
+		gameID = request.get('GameID', None)
+		role = request.get('RoleID', None)
 		payload = request.get('Payload',None)
-		accepted,newState = game2.tryPerformAction(gameState,role,payload)
+		gameState = self._gidToGameStateMap.get(gameID, None)
+		accepted = False if gameState==None else gameState.performAction(role,payload)
 		ret = {
 			'Accepted': accepted
 		}
-		self._gidToGameStateMap[gid] = newState
 		return ret
 
 	def getObservableGame(self, request):

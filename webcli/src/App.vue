@@ -3,17 +3,17 @@
       <login-dialog :active="IsLoginDialogActive" :default-user-name="UserName" @finished="onLoginFinished" />
       <mode-dialog :active="IsModeDialogActive" :default-mode="mode" @play-selected="onPlayModeSelected" @observe-selected="onObserveModeSelected" @cancelled="onModeSelectionCancelled" />
       <observer-waiting-dialog :active="IsObserverWaitingDialogActive" @cancelled="onObserverWaitingCancelled" @selected="onObservedGameSelected"/>
-      <mahjong-table :gameStateView="gameStateView" :mySeat="mySeat" />
+      <mahjong-table :gameStateView="gameStateView" :mySeat="mySeat" @UserAction="onUserAction" />
   </v-app>
 </template>
 
 <script>
 import Vue from 'vue'
+import {uuid} from 'vue-uuid'
 import axios from 'axios'
 import VueAxios from 'vue-axios'
 Vue.use(VueAxios, axios)
 
-import * as Utils from './util.js'
 import * as Game2Util from './game2.js'
 import LoginDialog from './LoginDialog.vue'
 import ModeDialog from './ModeDialog.vue'
@@ -34,9 +34,10 @@ export default {
             UserName            : 'NoName',
             mode                : 'Play',
             State               : 'Observing',
-            mySeat              : Utils.randInt(0,4),
+            mySeat              : 0,
             gameStateView       : Game2Util.randGameStateView(),
             counter             : 0,
+            GameID              : uuid.v4(),
         }
     },
 
@@ -45,13 +46,15 @@ export default {
         setInterval(function(){
             if (!self.inProgress) {
                 self.inProgress = true
-                axios.post(process.env.VUE_APP_API_SERVER_URL, {Action:'GetGameState2',GameID:'qwer',RoleID:-1,})
-                .then(response => {
+                axios.post(process.env.VUE_APP_API_SERVER_URL, {
+                    Action:'GetGameState2',
+                    GameID:self.GameID,
+                    RoleID:-1,
+                }).then(response => {
                     var sub = response.data
                     self.gameStateView = sub
                     self.inProgress = false
-                })
-                .catch(function(error){
+                }).catch(function(error){
                     window.console.log(error)
                     self.inProgress = false
                 })
@@ -94,6 +97,16 @@ export default {
         onObservedGameSelected(gameID){
             window.console.log("Starting to observe " + gameID + ".")
             this.State = 'Observing'
+        },
+        onUserAction(action){
+            window.console.log("User action!")
+            window.console.log(action)
+            axios.post(process.env.VUE_APP_API_SERVER_URL, {
+                Action:'PerformGameAction',
+                GameID:this.GameID,
+                RoleID:Game2Util.getRoleFromArea(action.Area),
+                Payload:Game2Util.getActionPayload(action.Action),
+            })
         }
     },
 };

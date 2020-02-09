@@ -31,7 +31,9 @@ export function getRandomTileViewList(len){
 export function getRandomTriplet(){
     var victimTid = randTid()
     var gid = Math.floor(victimTid/4)
-    return [gid*4,gid*4+1,gid*4+2,gid*4+3].filter((tid) => tid!=victimTid).map((tid) => ({IsValueVisible : true, Value : tid}))
+    return {
+        TileViews: [gid*4,gid*4+1,gid*4+2,gid*4+3].filter((tid) => tid!=victimTid).map((tid) => ({IsValueVisible : true, Value : tid}))
+    }
 }
 
 export function getRandomSequence(){
@@ -41,7 +43,9 @@ export function getRandomSequence(){
     var tileViews = tids.map((tid) => ({IsValueVisible : true, Value : tid}))
     Utils.shuffleArray(tileViews)
     tileViews[Utils.randInt(0,3)].Rotated = true
-    return tileViews
+    return {
+        TileViews: tileViews
+    }
 }
 
 export function getRandomSet(){
@@ -92,5 +96,34 @@ export function randGameStateView() {
             randAreaData(),
             randAreaData(),
         ],
+    }
+}
+
+export function getRoleFromArea(area) {
+    switch (area) {
+        case 'Self': return 0
+        case 'Oppo': return 1
+        default: return undefined
+    }
+}
+
+export function getActionPayload(userAction) {
+    switch (userAction.Type) {
+        case 'OldHandClick':
+            return {
+                Type : 'DiscardFromHand',
+                'FromOldHand': true,
+                'Index': userAction.Idx,
+            }
+        case 'NewHandClick':
+            return {
+                Type : 'DiscardFromHand',
+                'FromOldHand': false,
+                'Index': userAction.Idx,
+            }
+        case 'SetClick':
+            return {
+                Type : 'Kan2',
+            }
     }
 }
