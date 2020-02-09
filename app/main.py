@@ -6,7 +6,7 @@ from Host import Host
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
-
+logging.getLogger('werkzeug').setLevel(logging.ERROR)
 app = Flask(__name__)
 CORS(app)
 host = Host()

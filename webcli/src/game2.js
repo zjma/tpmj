@@ -125,5 +125,9 @@ export function getActionPayload(userAction) {
             return {
                 Type : 'Kan2',
             }
+        case 'PassClick':
+            return {
+                Type : 'Pass',
+            }
     }
 }

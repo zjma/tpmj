@@ -47,7 +47,7 @@ export default {
             if (!self.inProgress) {
                 self.inProgress = true
                 axios.post(process.env.VUE_APP_API_SERVER_URL, {
-                    Action:'GetGameState2',
+                    Action:'GetGameState',
                     GameID:self.GameID,
                     RoleID:-1,
                 }).then(response => {

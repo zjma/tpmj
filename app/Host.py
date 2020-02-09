@@ -61,14 +61,6 @@ class Host:
 		return ret
 
 	def getGameState(self, request):
-		playerToken = request.get('PlayerToken', None)
-		if playerToken not in self._playerToGidAndRoleMap:
-			return {}
-		gid,role = self._playerToGidAndRoleMap[playerToken]
-		gameState = self._gidToGameStateMap[gid]
-		return game2.getGameStateView(gameState, role)
-
-	def getGameState2(self, request):
 		gid = request.get('GameID', None)
 		role = request.get('RoleID', None)
 		gameState = self._gidToGameStateMap[gid] if gid in self._gidToGameStateMap else self._gidToGameStateMap.setdefault(gid, GameState())

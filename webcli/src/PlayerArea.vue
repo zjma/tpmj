@@ -5,6 +5,7 @@
         <div v-for="(item,idx) in this.data.OldHand" :key="`oldhand-${idx}`" :style="getOldHandTileStyle(idx)" @click="onOldHandClick(idx)">{{getViewString(data.OldHand[idx])}}</div>
         <div v-for="(item,idx) in this.data.NewHand" :key="`newhand-${idx}`" :style="getNewHandTileStyle(idx)" @click="onNewHandClick(idx)" @mouseover="onMouseOverNewHand(idx)" @mouseout="onMouseOutNewHand(idx)">{{getViewString(data.NewHand[idx])}}</div>
         <built-set v-for="(item,idx) in this.data.BuiltSets" :key="`buildsets-${idx}`" :style="getBuiltSetStyle(idx)" @SetClick="onSetClick(idx)" @mouseover="onMouseOverSet(idx)" @mouseout="onMouseOutSet(idx)" :setData="item" :tileWidth="dims.tileWidth" :tileHeight="dims.tileHeight"/>
+        <v-btn outlined height="40px" :style="passButtonStyle" @click="onPassClick">Pass</v-btn>
     </div>
 </template>
 
@@ -32,10 +33,25 @@ export default {
         dims: function(){
             return styling.getDimensions(this.width, this.height)
         },
+        actionButtonStyle : function(){
+            return {
+                position: 'absolute',
+                top: `${this.height/2}px`,
+                left: `${this.width/2}px`,
+            }
+        },
+        passButtonStyle : function(){
+            return {
+                position: 'absolute',
+                top: `80px`,
+                left: `300px`,
+
+            }
+        }
     },
     data: function(){
         return {
-            TileGroupChars : ['🀇','🀈','🀉','🀊','🀋','🀌','🀍','🀎','🀏','🀐','🀑','🀒','🀓','🀔','🀕','🀖','🀗','🀘','🀙','🀚','🀛','🀜','🀝','🀞','🀟','🀠','🀡','🀀','🀁','🀂','🀃','🀆','🀅','🀄']
+            dropdown_font : [3,4,5],
         }
     },
     methods: {
@@ -94,10 +110,6 @@ export default {
                 height: `${this.dims.SetHeight}px`,
             }
         },
-        getUCharByTid(tid){
-            var gid = Math.floor(tid/4)
-            return this.TileGroupChars[gid]
-        },
         getViewString(tileView) {
             return styling.getTileViewChar(tileView)
         },
@@ -143,6 +155,12 @@ export default {
                 Idx: idx,
             })
         },
+        onPassClick(){
+            window.console.log('onPassClick')
+            this.$emit('UserAction', {
+                Type: 'PassClick',
+            })
+        }
     }
 }
 </script>
