@@ -31,7 +31,9 @@ export function getRandomTileViewList(len){
 export function getRandomTriplet(){
     var victimTid = randTid()
     var gid = Math.floor(victimTid/4)
-    return [gid*4,gid*4+1,gid*4+2,gid*4+3].filter((tid) => tid!=victimTid).map((tid) => ({IsValueVisible : true, Value : tid}))
+    return {
+        TileViews: [gid*4,gid*4+1,gid*4+2,gid*4+3].filter((tid) => tid!=victimTid).map((tid) => ({IsValueVisible : true, Value : tid}))
+    }
 }
 
 export function getRandomSequence(){
@@ -41,7 +43,9 @@ export function getRandomSequence(){
     var tileViews = tids.map((tid) => ({IsValueVisible : true, Value : tid}))
     Utils.shuffleArray(tileViews)
     tileViews[Utils.randInt(0,3)].Rotated = true
-    return tileViews
+    return {
+        TileViews: tileViews
+    }
 }
 
 export function getRandomSet(){
@@ -92,5 +96,96 @@ export function randGameStateView() {
             randAreaData(),
             randAreaData(),
         ],
+        State : {
+        }
     }
+}
+
+export function getRoleFromArea(area) {
+    switch (area) {
+        case 'Self': return 0
+        case 'Oppo': return 1
+        default: return undefined
+    }
+}
+
+export function getActionPayload(userAction) {
+    switch (userAction.Type) {
+        case 'OldHandClick':
+            return {
+                Type : 'DiscardFromHand',
+                'FromOldHand': true,
+                'Index': userAction.Idx,
+            }
+        case 'NewHandClick':
+            return {
+                Type : 'DiscardFromHand',
+                'FromOldHand': false,
+                'Index': userAction.Idx,
+            }
+        case 'SetClick':
+            return {
+                Type : 'Kan2',
+            }
+        case 'PassClick':
+            return {
+                Type : 'Pass',
+            }
+        case 'PonClick':
+            return {
+                Type : 'Pon',
+            }
+        case 'WinClick':
+            return {
+                Type : 'Win',
+            }
+        case 'Chi0Click':
+            return {
+                Type : 'Chi',
+                ChiMode : '_YZ',
+            }
+        case 'Chi1Click':
+            return {
+                Type : 'Chi',
+                ChiMode : 'X_Z',
+            }
+        case 'Chi2Click':
+            return {
+                Type : 'Chi',
+                ChiMode : 'XY_',
+            }
+        case 'KanOptionClick':
+            return {
+                Type : 'Kan',
+                Value: userAction.KanOption,
+            }
+    }
+}
+
+export function getRoleBySeatID(seatID) {
+    return (seatID == 0) ? 0 : (seatID == 2) ? 1 : undefined
+}
+
+export function getTidsFromViews() {
+    //TODO
+}
+
+export function getTileGroupID(tid) {
+    return Math.floor(tid/4)
+}
+
+export function getKanOptions(gameStateView, role) {
+    var seatID = 0 //TODO
+    var oldHandTids = getTidsFromViews(gameStateView.AreaViews[seatID].OldHand)
+    var newHandTids = getTidsFromViews(gameStateView.AreaViews[seatID].NewHand)
+    var handTids = oldHandTids.concat(newHandTids)
+    handTids.sort()
+    if (gameStateView.State.Main == 'PlayerXHandleDraw' && gameStateView.State.X == role) {
+        for (var tgid=0; tgid<34; tgid++) {
+            if (handTids.filter(tid => (getTileGroupID(tid)==tgid)).length == 4) {
+                //TODO
+            }
+        }
+    }
+    return []
 }

@@ -6,7 +6,7 @@ from Host import Host
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
-
+logging.getLogger('werkzeug').setLevel(logging.ERROR)
 app = Flask(__name__)
 CORS(app)
 host = Host()
@@ -14,9 +14,7 @@ host = Host()
 @app.route("/tpmj", methods=["POST"])
 def tpmj():
 	try:
-		logger.debug('yo')
 		req = request.get_json(force=True,silent=True)
-		logger.debug(req)
 		if req == None: req = {}
 		response = host.handle(req)
 		return jsonify(response)

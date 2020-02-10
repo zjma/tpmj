@@ -1,136 +1,244 @@
 <template>
-    <div>
-        <div v-for="(item,rowIdx) in Array(4)" :key="`riverrow-${rowIdx}`">
-            <span v-for="(item,idx) in Array(6)" :key="`riverrow-${rowIdx}-leftgap-${idx}`"></span>
-            <span v-for="(item,colIdx) in Array(7)" :key="`riverrow-${rowIdx}-content-${colIdx}`" :class="{rotate: IsRotatedTileView(RiverRow[rowIdx][colIdx])}">{{getViewString(RiverRow[rowIdx][colIdx])}}</span>
-            <span v-for="(item,idx) in Array(6)" :key="`riverrow-${rowIdx}-rightgap-${idx}`"></span>
+    <div class="PlayerArea.vue" :style="containerStyle">
+        <div v-for="(item,idx) in this.data.River" :key="`river-${idx}`" :style="getRiverTileStyle(idx)">{{getViewString(data.River[idx])}}</div>
+        <div v-for="(item,idx) in this.data.Mountain" :key="`mountain-${idx}`" :style="getMountainTileStyle(idx)">{{getViewString(data.Mountain[idx])}}</div>
+        <div v-for="(item,idx) in this.data.OldHand" :key="`oldhand-${idx}`" :style="getOldHandTileStyle(idx)" @click="onOldHandClick(idx)">{{getViewString(data.OldHand[idx])}}</div>
+        <div v-for="(item,idx) in this.data.NewHand" :key="`newhand-${idx}`" :style="getNewHandTileStyle(idx)" @click="onNewHandClick(idx)" @mouseover="onMouseOverNewHand(idx)" @mouseout="onMouseOutNewHand(idx)">{{getViewString(data.NewHand[idx])}}</div>
+        <built-set v-for="(item,idx) in this.data.BuiltSets" :key="`buildsets-${idx}`" :style="getBuiltSetStyle(idx)" @SetClick="onSetClick(idx)" @mouseover="onMouseOverSet(idx)" @mouseout="onMouseOutSet(idx)" :setData="item" :tileWidth="dims.tileWidth" :tileHeight="dims.tileHeight"/>
+        <div v-if="selfseat" style="position:absolute; top:200px; width:304px">
+            <v-btn text small height="40px" @click="onPassClick">Pass</v-btn>
+            <br>
+            <v-btn text small height="40px" @click="onPonClick">Pon</v-btn>
+            <br>
+            <v-btn text small height="40px" @click="onChi0Click">Chi _YZ</v-btn>
+            <v-btn text small height="40px" @click="onChi1Click">Chi X_Z</v-btn>
+            <v-btn text small height="40px" @click="onChi2Click">Chi XY_</v-btn>
+            <!-- <br>
+            <v-btn v-for="(item,idx) in this.KanOptions" :key="`kan-options-${idx}`" text small height="40px" @click="onKanOptionClick(item)">{{getSetOptionString(item)}}</v-btn> -->
+            <br>
+            <v-btn text small height="40px" @click="onWinClick">{{winButtonText}}</v-btn>
         </div>
-        <div v-for="(item,rowIdx) in Array(2)" :key="`mountainrow-${rowIdx}`">
-            <span v-for="(item,colIdx) in Array(19)" :key="`mountainrow-${rowIdx}-content-${colIdx}`">{{MountainRow[rowIdx][colIdx]}}</span>
-        </div>
-        <div class='gap-tile-row'>
-            <span></span>
-        </div>
-        <div id='hand'>
-            <span v-for="(item,idx) in HandRow" :key="`handrow-${idx}`">{{item}}</span>
-        </div>
-          <div class='gap-tile-row'>
-              <span></span>
-          </div>
-          <div class='built-sets-row'>
-              <span v-for="(item,idx) in SetRow" :key="`setrow-${idx}`" :class="{rotate: IsRotatedTileView(item)}">{{getViewString(item)}}</span>
-          </div>
     </div>
 </template>
 
 <script>
+import * as Game2Utils from './game2.js'
+import BuiltSet from './BuiltSet.vue'
+import * as styling from './PlayerAreaStyling.js'
 export default {
     name : 'PlayerArea',
+    components: {
+        'built-set' : BuiltSet
+    },
     props: {
         data: Object,
+        width: Number,
+        height: Number,
+        gameStateView : Object,
+        seatID : Number,
+        selfseat : Boolean,
     },
     computed: {
-        RiverRow : function() {
-            return [...Array(4).keys()].map(rowID => this.getRiverRow(rowID))
+        KanOptions : function(){
+            return [
+                [0,1,2,3,],
+                [4,5,6,7,],
+            ]
         },
-        MountainRow : function() {
-            return [...Array(2).keys()].map(rowIdx => this.getMountainRow(rowIdx))
+        containerStyle : function(){
+            return {
+                width : `${this.width}px`,
+                'max-width' : `${this.width}px`,
+                height : `${this.height}px`,
+            }
         },
-        HandRow : function() {
-            var leftGapCount = 2
-            var rightGapCount = 19-(2+this.data.OldHand.length+1+this.data.NewHand.length)
-            var sortedOldHand = [...this.data.OldHand]
-            sortedOldHand.sort(function(v0,v1){
-                var x0 = (v0.IsValueVisible) ? v0.Value : -1
-                var x1 = (v1.IsValueVisible) ? v1.Value : -1
-                if (x0<x1) return -1
-                if (x0>x1) return 1
-                return 0
-            })
-            var tileViews = Array(leftGapCount).concat(sortedOldHand).concat([undefined]).concat(this.data.NewHand).concat(Array(rightGapCount))
-            var viewStrs = tileViews.map(this.getViewString)
-            return viewStrs
+        dims: function(){
+            return styling.getDimensions(this.width, this.height)
         },
-        SetRow : function() {
-            var ret = Array(19)
-            var idx = 18
-
-            for (const [sid,builtSet] of this.data.BuiltSets.entries()) {
-                var sortedSetTileViews = [...builtSet]
-
-                for (const tileView of sortedSetTileViews.reverse()) {
-                    if (idx>=0) {
-                        ret[idx--] = tileView
-                    }
+        winButtonStatus : function(){
+            if (this.gameStateView.State.Main == 'PlayerXHandleDraw' && this.gameStateView.State.X == Game2Utils.getRoleBySeatID(this.seatID)) {
+                return {
+                    ButtonText : 'Tsumo',
+                    Enabled   : true,
                 }
-
-                if (sid < this.data.BuiltSets.length - 1) {
-                    if (idx>=0) {
-                        idx--;
-                    }
+            } else if (this.gameStateView.State.Main == 'PlayerXToRespondToDiscard' && this.gameStateView.State.X == Game2Utils.getRoleBySeatID(this.seatID)) {
+                return {
+                    ButtonText: 'Ron',
+                    Enabled   : true,
+                }
+            } else {
+                return {
+                    ButtonText: '',
+                    Enabled   : false,
                 }
             }
-            return ret
-        }
-    },
-    data: function(){
-        return {
-            TileGroupChars : ['🀇','🀈','🀉','🀊','🀋','🀌','🀍','🀎','🀏','🀐','🀑','🀒','🀓','🀔','🀕','🀖','🀗','🀘','🀙','🀚','🀛','🀜','🀝','🀞','🀟','🀠','🀡','🀀','🀁','🀂','🀃','🀆','🀅','🀄']
+        },
+        winButtonText : function() {
+            return this.winButtonStatus.ButtonText
         }
     },
     methods: {
-        getUCharByTid(tid){
-            var gid = Math.floor(tid/4)
-            return this.TileGroupChars[gid]
+        onKanOptionClick(kanOption) {
+            window.console.log(`KanOptionClicked:${kanOption}`)
+            this.$emit('UserAction',{
+                Type:'KanOptionClick',
+                KanOption:kanOption,
+            })
         },
-        getRiverRow(rowID){
-            return [...Array(7).keys()].map(colID => this.data.River[rowID*7+colID])
+        getSetOptionString(setOption) {
+            return setOption.map(tid => styling.getTileViewChar({IsValueVisible:true,Value:tid})).join('')
         },
-        getMountainRow(rowIdx){
-            return [...Array(19).keys()].map(colIdx => this.getViewString(this.data.Mountain[colIdx*2+rowIdx]))
+        getRiverTileStyle(idx) {
+            var rowIdx = Math.floor(idx/6)
+            var colIdx = idx%6
+            return {
+                position: 'absolute',
+                top: `${this.dims.riverTop+this.dims.tileHeight*rowIdx}px`,
+                left: `${this.dims.riverLeft+this.dims.tileWidth*colIdx}px`,
+                width: `${this.dims.tileWidth}px`,
+                'max-width': `${this.dims.tileWidth}px`,
+                height: `${this.dims.tileHeight}px`,
+            }
+        },
+        getMountainTileStyle(idx) {
+            var rowIdx = idx%2
+            var colIdx = 18-Math.floor(idx/2)
+            return {
+                position: 'absolute',
+                top: `${this.dims.MountainTop+this.dims.tileHeight*rowIdx}px`,
+                left: `${this.dims.MountainLeft+this.dims.tileWidth*colIdx}px`,
+                width: `${this.dims.tileWidth}px`,
+                'max-width': `${this.dims.tileWidth}px`,
+                height: `${this.dims.tileHeight}px`,
+            }
+        },
+        getOldHandTileStyle(idx) {
+            return {
+                position: 'absolute',
+                top: `${this.dims.HandTop}px`,
+                left: `${this.dims.HandLeft+this.dims.tileWidth*idx}px`,
+                width: `${this.dims.tileWidth}px`,
+                'max-width': `${this.dims.tileWidth}px`,
+                height: `${this.dims.tileHeight}px`,
+            }
+        },
+        getNewHandTileStyle(idx) {
+            var left = this.dims.HandLeft + this.dims.tileWidth*(this.data.OldHand.length+1+idx)
+            return {
+                position: 'absolute',
+                top: `${this.dims.HandTop}px`,
+                left: `${left}px`,
+                width: `${this.dims.tileWidth}px`,
+                'max-width': `${this.dims.tileWidth}px`,
+                height: `${this.dims.tileHeight}px`,
+            }
+        },
+        getBuiltSetStyle(idx) {
+            return {
+                position: 'absolute',
+                top: `${this.height-this.dims.SetHeight}px`,
+                left: `${this.width-this.dims.SetWidth*(idx+1)-this.dims.tileWidth/2*(idx)}px`,
+                width: `${this.dims.SetWidth}px`,
+                'max-width': `${this.dims.SetWidth}px`,
+                height: `${this.dims.SetHeight}px`,
+            }
         },
         getViewString(tileView) {
-            if (tileView) {
-                if (tileView.IsValueVisible) {
-                    return this.getUCharByTid(tileView.Value)
-                } else {
-                    return '🀫'
-                }
-            } else {
-                return undefined;
-            }
+            return styling.getTileViewChar(tileView)
         },
         IsRotatedTileView(tileView) {
             return tileView && tileView.Rotated
-        }
+        },
+        onMouseOverOldHand(idx){
+            window.console.log(`MouseOverOldHand,idx=${idx}`)
+        },
+        onMouseOutOldHand(idx){
+            window.console.log(`MouseOutOldHand,idx=${idx}`)
+        },
+        onMouseOverNewHand(idx){
+            window.console.log(`MouseOverNewHand,idx=${idx}`)
+        },
+        onMouseOutNewHand(idx){
+            window.console.log(`MouseOutNewHand,idx=${idx}`)
+        },
+        onMouseOverSet(idx){
+            window.console.log(`MouseOverSet,idx=${idx}`)
+        },
+        onMouseOutSet(idx){
+            window.console.log(`MouseOutSet,idx=${idx}`)
+        },
+        onOldHandClick(idx){
+            window.console.log(`onOldHandClick,idx=${idx}`)
+            this.$emit('UserAction', {
+                Type: 'OldHandClick',
+                Idx: idx,
+            })
+        },
+        onNewHandClick(idx){
+            window.console.log(`onNewHandClick,idx=${idx}`)
+            this.$emit('UserAction', {
+                Type: 'NewHandClick',
+                Idx: idx,
+            })
+        },
+        onSetClick(idx){
+            window.console.log(`onSetClick,idx=${idx}`)
+            this.$emit('UserAction', {
+                Type: 'SetClick',
+                Idx: idx,
+            })
+        },
+        onPassClick(){
+            window.console.log('onPassClick')
+            this.$emit('UserAction', {
+                Type: 'PassClick',
+            })
+        },
+        onPonClick(){
+            window.console.log('onPassClick')
+            this.$emit('UserAction', {
+                Type: 'PonClick',
+            })
+        },
+        onWinClick(){
+            window.console.log('onWinClick')
+            this.$emit('UserAction', {
+                Type: 'WinClick',
+            })
+        },
+        onChi0Click(){
+            this.$emit('UserAction', {
+                Type: 'Chi0Click',
+            })
+        },
+        onChi1Click(){
+            this.$emit('UserAction', {
+                Type: 'Chi1Click',
+            })
+        },
+        onChi2Click(){
+            this.$emit('UserAction', {
+                Type: 'Chi2Click',
+            })
+        },
     }
 }
 </script>
 
 <style>
-span {
-    display: inline-block;
-    font-size: 16px;
-    width: 16px;
-    max-width: 16px;
+.Skip {
+    position: absolute;
+    top: 200px;
+    left: 350px;
 }
-
-div {
-    text-align: center;
+.Tsumo {
+    position: absolute;
+    top: 150px;
+    left: 350px;
 }
-
-.rotate {
-    display: inline-block;
-    transform: rotate(-270deg) translate(15%,-10.5%);
-    -webkit-transform: rotate(-270deg) translate(15%,-10.5%);
-    -moz-transform: rotate(-270deg) translate(15%,-10.5%);
-    -ms-transform: rotate(-270deg) translate(15%,-10.5%);
-    -o-transform: rotate(-270deg) translate(15%,-10.5%);
-    filter: progid:DXImageTransform.Microsoft.BasicImage(rotation=3);
-}
-
-.mahjong-table {
-    font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans",sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol","Noto Color Emoji";
-    line-height: 1.5;
+.Ron {
+    position: absolute;
+    top: 100px;
+    left: 350px;
 }
 </style>
