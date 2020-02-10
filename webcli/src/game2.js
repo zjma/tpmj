@@ -96,6 +96,8 @@ export function randGameStateView() {
             randAreaData(),
             randAreaData(),
         ],
+        State : {
+        }
     }
 }
 
@@ -133,5 +135,13 @@ export function getActionPayload(userAction) {
             return {
                 Type : 'Pon',
             }
+        case 'WinClick':
+            return {
+                Type : 'Win',
+            }
     }
+}
+
+export function getRoleBySeatID(seatID) {
+    return (seatID == 0) ? 0 : (seatID == 2) ? 1 : undefined
 }

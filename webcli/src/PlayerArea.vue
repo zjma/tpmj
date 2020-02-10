@@ -8,11 +8,13 @@
         <div style="position:absolute; top:200px; width:304px">
             <v-btn text small height="40px" @click="onPassClick">Pass</v-btn>
             <v-btn text small height="40px" @click="onPonClick">Pon</v-btn>
+            <v-btn text small height="40px" @click="onWinClick">{{winButtonText}}</v-btn>
         </div>
     </div>
 </template>
 
 <script>
+import * as Game2Utils from './game2.js'
 import BuiltSet from './BuiltSet.vue'
 import * as styling from './PlayerAreaStyling.js'
 export default {
@@ -24,6 +26,8 @@ export default {
         data: Object,
         width: Number,
         height: Number,
+        gameStateView : Object,
+        seatID : Number,
     },
     computed: {
         containerStyle : function(){
@@ -36,25 +40,26 @@ export default {
         dims: function(){
             return styling.getDimensions(this.width, this.height)
         },
-        actionButtonStyle : function(){
-            return {
-                position: 'absolute',
-                top: `${this.height/2}px`,
-                left: `${this.width/2}px`,
+        winButtonStatus : function(){
+            if (this.gameStateView.State.Main == 'PlayerXHandleDraw' && this.gameStateView.State.X == Game2Utils.getRoleBySeatID(this.seatID)) {
+                return {
+                    ButtonText : 'Tsumo',
+                    Enabled   : true,
+                }
+            } else if (this.gameStateView.State.Main == 'PlayerXToRespondToDiscard' && this.gameStateView.State.X == Game2Utils.getRoleBySeatID(this.seatID)) {
+                return {
+                    ButtonText: 'Ron',
+                    Enabled   : true,
+                }
+            } else {
+                return {
+                    ButtonText: '',
+                    Enabled   : false,
+                }
             }
         },
-        passButtonStyle : function(){
-            return {
-                position: 'absolute',
-                top: `80px`,
-                left: `300px`,
-
-            }
-        }
-    },
-    data: function(){
-        return {
-            dropdown_font : [3,4,5],
+        winButtonText : function() {
+            return this.winButtonStatus.ButtonText
         }
     },
     methods: {
@@ -168,6 +173,12 @@ export default {
             window.console.log('onPassClick')
             this.$emit('UserAction', {
                 Type: 'PonClick',
+            })
+        },
+        onWinClick(){
+            window.console.log('onWinClick')
+            this.$emit('UserAction', {
+                Type: 'WinClick',
             })
         }
     }

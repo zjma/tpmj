@@ -5,6 +5,40 @@ import logging
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
+def Check3X(tgids):
+    if len(tgids)==0: return True
+    if len(tgids)%3!=0: return False
+    tgid = min(tgids)
+    tgid0Count = len([None for x in tgids if x==tgid])
+    if tgid in range(7) or tgid in range(9,16) or tgid in range(18,25):
+        tgid1Count = len([None for x in tgids if x==tgid+1])
+        tgid2Count = len([None for x in tgids if x==tgid+2])
+        if tgid1Count>=1 and tgid2Count>=1:
+            tmpTgids = list(tgids)
+            tmpTgids.remove(tgid)
+            tmpTgids.remove(tgid+1)
+            tmpTgids.remove(tgid+2)
+            if Check3X(tmpTgids): return True
+    if tgid0Count>=3:
+        tmpTgids = list(tgids)
+        tmpTgids.remove(tgid)
+        tmpTgids.remove(tgid)
+        tmpTgids.remove(tgid)
+        if Check3X(tmpTgids): return True
+    return False
+
+def Check3Xn2(tgids):
+    if len(tgids)%3!=2: return False
+    tg2c = [0 for _ in range(34)]
+    for tgid in tgids: tg2c[tgid]+=1
+    for tgid in range(34):
+        if tg2c[tgid]>=2:
+            tmpTgids = list(tgids)
+            tmpTgids.remove(tgid)
+            tmpTgids.remove(tgid)
+            if Check3X(tmpTgids): return True
+    return False
+
 class Mountain:
     def __init__(self):
         tiles = list(range(36,72)) + list(range(108,136))
@@ -119,7 +153,8 @@ class GameState:
             if mainState == 'PlayerXHandleDraw':
                 if role==self._state.get('X',None):
                     seatID = self._getSeatIDByRole(role)
-                    if action.get('Type',None)=='DiscardFromHand':
+                    actionType = action.get('Type',None)
+                    if actionType=='DiscardFromHand':
                         fromOldHand = action.get('FromOldHand', False)
                         idx = action.get('Index',999)
                         if idx>=0 and fromOldHand and idx<len(self._oldHand[seatID]) or not fromOldHand and idx<len(self._newHand[seatID]):
@@ -127,6 +162,12 @@ class GameState:
                             self._organizeHand(seatID)
                             self._state = {'Main':'PlayerXToRespondToDiscard','X':1-role}
                             return True
+                    if actionType=='Win':
+                        tgids = [tid//4 for tid in (self._oldHand[seatID] + self._newHand[seatID])]
+                        if not Check3Xn2(tgids): return False
+                        self._state = {'Main':'PlayerXWon','X':role}
+                        return True
+
             elif mainState == 'PlayerXToRespondToDiscard':
                 if role==self._state.get('X',None):
                     seatID = self._getSeatIDByRole(role)

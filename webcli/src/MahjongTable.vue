@@ -1,9 +1,9 @@
 <template>
     <div class="MahjongTable">
-        <player-area class="opposite-area player-area" :data="oppoAreaData" :width="304" :height="200" @UserAction="onOppoAction($event)" />
-        <player-area class="left-area player-area" :data="leftAreaData" :width="304" :height="200" @UserAction="onLeftAction($event)" />
-        <player-area class="right-area player-area" :data="rightAreaData" :width="304" :height="200" @UserAction="onRightAction($event)" />
-        <player-area class="my-area player-area" :data="myAreaData" :width="304" :height="200" @UserAction="onSelfAction($event)" />
+        <player-area class="opposite-area player-area" :data="oppoAreaData" :gameStateView="gameStateView" :seatID="oppoSeat" :width="304" :height="200" @UserAction="onOppoAction($event)" />
+        <player-area class="left-area player-area" :data="leftAreaData" :gameStateView="gameStateView" :seatID="leftSeat" :width="304" :height="200" @UserAction="onLeftAction($event)" />
+        <player-area class="right-area player-area" :data="rightAreaData" :gameStateView="gameStateView" :seatID="rightSeat" :width="304" :height="200" @UserAction="onRightAction($event)" />
+        <player-area class="my-area player-area" :data="myAreaData" :gameStateView="gameStateView" :seatID="mySeat" :width="304" :height="200" @UserAction="onSelfAction($event)" />
     </div>
 </template>
 
@@ -30,6 +30,15 @@ export default {
         },
         myAreaData : function() {
             return this.gameStateView.AreaViews[(this.mySeat+0)%4]
+        },
+        rightSeat : function() {
+            return (this.mySeat+1)%4
+        },
+        oppoSeat : function() {
+            return (this.mySeat+2)%4
+        },
+        leftSeat : function() {
+            return (this.mySeat+3)%4
         },
     },
     methods: {
