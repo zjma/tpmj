@@ -139,9 +139,53 @@ export function getActionPayload(userAction) {
             return {
                 Type : 'Win',
             }
+        case 'Chi0Click':
+            return {
+                Type : 'Chi',
+                ChiMode : '_YZ',
+            }
+        case 'Chi1Click':
+            return {
+                Type : 'Chi',
+                ChiMode : 'X_Z',
+            }
+        case 'Chi2Click':
+            return {
+                Type : 'Chi',
+                ChiMode : 'XY_',
+            }
+        case 'KanOptionClick':
+            return {
+                Type : 'Kan',
+                Value: userAction.KanOption,
+            }
     }
 }
 
 export function getRoleBySeatID(seatID) {
     return (seatID == 0) ? 0 : (seatID == 2) ? 1 : undefined
+}
+
+export function getTidsFromViews() {
+    //TODO
+}
+
+export function getTileGroupID(tid) {
+    return Math.floor(tid/4)
+}
+
+export function getKanOptions(gameStateView, role) {
+    var seatID = 0 //TODO
+    var oldHandTids = getTidsFromViews(gameStateView.AreaViews[seatID].OldHand)
+    var newHandTids = getTidsFromViews(gameStateView.AreaViews[seatID].NewHand)
+    var handTids = oldHandTids.concat(newHandTids)
+    handTids.sort()
+    if (gameStateView.State.Main == 'PlayerXHandleDraw' && gameStateView.State.X == role) {
+        for (var tgid=0; tgid<34; tgid++) {
+            if (handTids.filter(tid => (getTileGroupID(tid)==tgid)).length == 4) {
+                //TODO
+            }
+        }
+    }
+    return []
 }

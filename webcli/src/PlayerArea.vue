@@ -5,9 +5,17 @@
         <div v-for="(item,idx) in this.data.OldHand" :key="`oldhand-${idx}`" :style="getOldHandTileStyle(idx)" @click="onOldHandClick(idx)">{{getViewString(data.OldHand[idx])}}</div>
         <div v-for="(item,idx) in this.data.NewHand" :key="`newhand-${idx}`" :style="getNewHandTileStyle(idx)" @click="onNewHandClick(idx)" @mouseover="onMouseOverNewHand(idx)" @mouseout="onMouseOutNewHand(idx)">{{getViewString(data.NewHand[idx])}}</div>
         <built-set v-for="(item,idx) in this.data.BuiltSets" :key="`buildsets-${idx}`" :style="getBuiltSetStyle(idx)" @SetClick="onSetClick(idx)" @mouseover="onMouseOverSet(idx)" @mouseout="onMouseOutSet(idx)" :setData="item" :tileWidth="dims.tileWidth" :tileHeight="dims.tileHeight"/>
-        <div style="position:absolute; top:200px; width:304px">
+        <div v-if="selfseat" style="position:absolute; top:200px; width:304px">
             <v-btn text small height="40px" @click="onPassClick">Pass</v-btn>
+            <br>
             <v-btn text small height="40px" @click="onPonClick">Pon</v-btn>
+            <br>
+            <v-btn text small height="40px" @click="onChi0Click">Chi _YZ</v-btn>
+            <v-btn text small height="40px" @click="onChi1Click">Chi X_Z</v-btn>
+            <v-btn text small height="40px" @click="onChi2Click">Chi XY_</v-btn>
+            <!-- <br>
+            <v-btn v-for="(item,idx) in this.KanOptions" :key="`kan-options-${idx}`" text small height="40px" @click="onKanOptionClick(item)">{{getSetOptionString(item)}}</v-btn> -->
+            <br>
             <v-btn text small height="40px" @click="onWinClick">{{winButtonText}}</v-btn>
         </div>
     </div>
@@ -28,8 +36,15 @@ export default {
         height: Number,
         gameStateView : Object,
         seatID : Number,
+        selfseat : Boolean,
     },
     computed: {
+        KanOptions : function(){
+            return [
+                [0,1,2,3,],
+                [4,5,6,7,],
+            ]
+        },
         containerStyle : function(){
             return {
                 width : `${this.width}px`,
@@ -63,6 +78,16 @@ export default {
         }
     },
     methods: {
+        onKanOptionClick(kanOption) {
+            window.console.log(`KanOptionClicked:${kanOption}`)
+            this.$emit('UserAction',{
+                Type:'KanOptionClick',
+                KanOption:kanOption,
+            })
+        },
+        getSetOptionString(setOption) {
+            return setOption.map(tid => styling.getTileViewChar({IsValueVisible:true,Value:tid})).join('')
+        },
         getRiverTileStyle(idx) {
             var rowIdx = Math.floor(idx/6)
             var colIdx = idx%6
@@ -180,7 +205,22 @@ export default {
             this.$emit('UserAction', {
                 Type: 'WinClick',
             })
-        }
+        },
+        onChi0Click(){
+            this.$emit('UserAction', {
+                Type: 'Chi0Click',
+            })
+        },
+        onChi1Click(){
+            this.$emit('UserAction', {
+                Type: 'Chi1Click',
+            })
+        },
+        onChi2Click(){
+            this.$emit('UserAction', {
+                Type: 'Chi2Click',
+            })
+        },
     }
 }
 </script>

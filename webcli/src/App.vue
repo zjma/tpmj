@@ -1,10 +1,11 @@
 <template>
-  <v-app>
-      <login-dialog :active="IsLoginDialogActive" :default-user-name="UserName" @finished="onLoginFinished" />
-      <mode-dialog :active="IsModeDialogActive" :default-mode="mode" @play-selected="onPlayModeSelected" @observe-selected="onObserveModeSelected" @cancelled="onModeSelectionCancelled" />
-      <observer-waiting-dialog :active="IsObserverWaitingDialogActive" @cancelled="onObserverWaitingCancelled" @selected="onObservedGameSelected"/>
-      <mahjong-table :gameStateView="gameStateView" :mySeat="mySeat" @UserAction="onUserAction" />
-  </v-app>
+    <v-app>
+        <login-dialog :active="IsLoginDialogActive" :default-user-name="UserName" @finished="onLoginFinished" />
+        <mode-dialog :active="IsModeDialogActive" :default-mode="mode" @play-selected="onPlayModeSelected" @observe-selected="onObserveModeSelected" @cancelled="onModeSelectionCancelled" />
+        <player-waiting-dialog :active="IsPlayerWaitingDialogActive" @cancelled="onPlayerWaitingCancelled" @selected="onPlayerGameSelected"/>
+        <observer-waiting-dialog :active="IsObserverWaitingDialogActive" @cancelled="onObserverWaitingCancelled" @selected="onObservedGameSelected"/>
+        <mahjong-table :gameStateView="gameStateView" :mySeat="MySeat" @UserAction="onUserAction" />
+    </v-app>
 </template>
 
 <script>
@@ -18,6 +19,7 @@ import * as Game2Util from './game2.js'
 import LoginDialog from './LoginDialog.vue'
 import ModeDialog from './ModeDialog.vue'
 import ObserverWaitingDialog from './ObserverWaitingDialog.vue'
+import PlayerWaitingDialog from './PlayerWaitingDialog.vue'
 import MahjongTable from './MahjongTable.vue'
 
 export default {
@@ -27,39 +29,74 @@ export default {
         'login-dialog'              : LoginDialog,
         'mode-dialog'               : ModeDialog,
         'observer-waiting-dialog'   : ObserverWaitingDialog,
+        'player-waiting-dialog'     : PlayerWaitingDialog,
         'mahjong-table'             : MahjongTable,
     },
     data: function() {
         return {
             UserName            : 'NoName',
             mode                : 'Play',
-            State               : 'Observing',
-            mySeat              : 0,
+            State               : 'UserLoggingIn',
+            MySeat              : 0,
             gameStateView       : Game2Util.randGameStateView(),
             counter             : 0,
             GameID              : uuid.v4(),
+            MyRole              : -1,
+            PlayerWaitingQueryPending : false,
+            PlayingQueryPending: false,
         }
     },
 
     mounted: function() {
         const self = this
         setInterval(function(){
-            if (!self.inProgress) {
-                self.inProgress = true
+            if (self.State == 'Playing' && !self.PlayingQueryPending) {
+                self.PlayingQueryPending = true
                 axios.post(process.env.VUE_APP_API_SERVER_URL, {
                     Action:'GetGameState',
                     GameID:self.GameID,
-                    RoleID:-1,
+                    RoleID:self.MyRole,
                 }).then(response => {
+                    self.PlayingQueryPending = false
                     var sub = response.data
-                    self.gameStateView = sub
-                    self.inProgress = false
+                    if (self.State == 'Playing') {
+                        self.gameStateView = sub
+                        if (sub.State.Main == 'PlayerXWon' || sub.State.Main == 'Finished') {
+                            window.console.log(sub.State)
+                            self.State = 'UserSelectingMode'
+                        }
+                    }
                 }).catch(function(error){
+                    self.PlayingQueryPending = false
                     window.console.log(error)
-                    self.inProgress = false
                 })
             }
         }, 1000)
+
+        setInterval(function(){
+            if (self.State == 'PlayerWaitingForGame' && !self.PlayerWaitingQueryPending) {
+                self.PlayerWaitingQueryPending = true
+                axios.post(process.env.VUE_APP_API_SERVER_URL, {
+                    Action:'RequestMatch',
+                    PlayerName:self.UserName,
+                }).then(response => {
+                    self.PlayerWaitingQueryPending = false
+                    var sub = response.data
+                    if (self.State == 'PlayerWaitingForGame' && sub.GameID) {
+                        window.console.log('Switching to playing view.')
+                        window.console.log(sub)
+                        self.State = 'Playing'
+                        self.GameID = sub.GameID
+                        self.MyRole = sub.Role
+                        self.MySeat = (sub.Role==0)?0:2
+                    }
+                }).catch(function(error){
+                    self.PlayerWaitingQueryPending = false
+                    window.console.log(error)
+                })
+
+            }
+        },2000)
     },
 
     computed: {
@@ -73,11 +110,16 @@ export default {
 
         IsObserverWaitingDialogActive: function(){
             return this.State == 'ObserverWaitingForGame'
-        }
+        },
+
+        IsPlayerWaitingDialogActive: function(){
+            return this.State == 'PlayerWaitingForGame'
+        },
     },
     methods: {
         onPlayModeSelected : function(){
-            window.console.warn('Not implemented')
+            this.mode = 'Play'
+            this.State = 'PlayerWaitingForGame'
         },
         onObserveModeSelected : function(){
             this.mode = 'Observe'
@@ -98,13 +140,23 @@ export default {
             window.console.log("Starting to observe " + gameID + ".")
             this.State = 'Observing'
         },
+        onPlayerWaitingCancelled(){
+            this.State = 'UserSelectingMode'
+        },
+        onPlayerGameSelected(gameID){
+            window.console.log("Starting to observe " + gameID + ".")
+            this.State = 'Playing'
+        },
         onUserAction(action){
             window.console.log("User action!")
             window.console.log(action)
+            if (action.Area != 'Self') {
+                return
+            }
             axios.post(process.env.VUE_APP_API_SERVER_URL, {
                 Action:'PerformGameAction',
                 GameID:this.GameID,
-                RoleID:Game2Util.getRoleFromArea(action.Area),
+                RoleID: this.MyRole,
                 Payload:Game2Util.getActionPayload(action.Action),
             })
         }

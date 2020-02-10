@@ -3,7 +3,7 @@
         <player-area class="opposite-area player-area" :data="oppoAreaData" :gameStateView="gameStateView" :seatID="oppoSeat" :width="304" :height="200" @UserAction="onOppoAction($event)" />
         <player-area class="left-area player-area" :data="leftAreaData" :gameStateView="gameStateView" :seatID="leftSeat" :width="304" :height="200" @UserAction="onLeftAction($event)" />
         <player-area class="right-area player-area" :data="rightAreaData" :gameStateView="gameStateView" :seatID="rightSeat" :width="304" :height="200" @UserAction="onRightAction($event)" />
-        <player-area class="my-area player-area" :data="myAreaData" :gameStateView="gameStateView" :seatID="mySeat" :width="304" :height="200" @UserAction="onSelfAction($event)" />
+        <player-area class="my-area player-area" :data="myAreaData" :gameStateView="gameStateView" :seatID="mySeat" selfseat :width="304" :height="200" @UserAction="onSelfAction($event)" />
     </div>
 </template>
 
@@ -20,6 +20,7 @@ export default {
     },
     computed: {
         oppoAreaData : function() {
+            window.console.log(`mySeat=${this.mySeat}`)
             return this.gameStateView.AreaViews[(this.mySeat+2)%4]
         },
         leftAreaData : function() {

@@ -127,19 +127,38 @@ class GameState:
     def getStateView(self, role):
         return {
             'AreaViews' : [
-                self._getAreaViewBySeatID(0),
-                self._getAreaViewBySeatID(1),
-                self._getAreaViewBySeatID(2),
-                self._getAreaViewBySeatID(3),
+                self._getAreaViewBySeatID(0,role),
+                self._getAreaViewBySeatID(1,role),
+                self._getAreaViewBySeatID(2,role),
+                self._getAreaViewBySeatID(3,role),
             ],
             'State' : self._state,
         }
-    def _getAreaViewBySeatID(self, seatID):
+
+    def _getMountainViewBySeatID(self, seatID, role):
+        if role==-1 or self._state['Main'] in ('PlayerXWon','Finished'):
+            return [({'IsValueVisible':True,'Value':tid} if tid!=None else None) for tid in self._mountain.getTilesBySeatID(seatID)]
+        return [({'IsValueVisible':False} if tid!=None else None) for tid in self._mountain.getTilesBySeatID(seatID)]
+
+    def _getOldHandView(self, seatID, role):
+        if role==-1 or seatID==self._getSeatIDByRole(role) or self._state['Main'] in ('PlayerXWon','Finished'):
+            return [{'IsValueVisible':True,'Value':tid} for tid in self._oldHand[seatID]]
+        return [{'IsValueVisible':False} for tid in self._oldHand[seatID]]
+
+    def _getNewHandView(self, seatID, role):
+        if role==-1 or seatID==self._getSeatIDByRole(role) or self._state['Main'] in ('PlayerXWon','Finished'):
+            return [{'IsValueVisible':True,'Value':tid} for tid in self._newHand[seatID]]
+        return [{'IsValueVisible':False} for tid in self._newHand[seatID]]
+
+    def _getAreaViewBySeatID(self, seatID, role):
+        '''
+        Get what it looks like at seatID area from role's view.
+        '''
         return {
             'River'     : [{'IsValueVisible':True,'Value':tid} for tid in self._river[seatID]],
-            'Mountain'  : [({'IsValueVisible':True,'Value':tid} if tid!=None else None) for tid in self._mountain.getTilesBySeatID(seatID)],
-            'OldHand'   : [{'IsValueVisible':True,'Value':tid} for tid in self._oldHand[seatID]],
-            'NewHand'   : [{'IsValueVisible':True,'Value':tid} for tid in self._newHand[seatID]],
+            'Mountain'  : self._getMountainViewBySeatID(seatID, role),
+            'OldHand'   : self._getOldHandView(seatID, role),
+            'NewHand'   : self._getNewHandView(seatID, role),
             'BuiltSets' : [s.toSetView() for s in self._builtSets[seatID]],
         }
     def performAction(self, role, action):
@@ -175,7 +194,6 @@ class GameState:
                     oppoSeatID = self._getSeatIDByRole(oppoRole)
                     actionType = action.get('Type',None)
                     if actionType=='Pass':
-                        logger.info(f'RemainingMountainTileCount={len(self._mountain)}')
                         if len(self._mountain)>=1:
                             self._drawTile(self._getSeatIDByRole(role))
                             self._state = {'Main':'PlayerXHandleDraw','X':role}
@@ -194,6 +212,52 @@ class GameState:
                         tid2 = candidates[1]
                         self._buildSet(seatID,[tid0,tid1,tid2])
                         self._state = {'Main':'PlayerXHandleDraw', 'X':role}
+                        return True
+                    elif actionType=='Chi':
+                        chiMode = action.get('ChiMode', None)
+                        if len(self._oldHand[seatID])<2: return False
+                        if len(self._river[oppoSeatID])<1: return False
+                        if len(self._builtSets[seatID])>=4: return False
+                        tid0 = self._river[oppoSeatID][-1]
+                        tgid = tid0 // 4
+                        if chiMode=='_YZ':
+                            if tgid in range(0,7) or tgid in range(9,16) or tgid in range(18,25):
+                                tiles_1 = [tid for tid in self._oldHand[seatID] if tid//4==tgid+1]
+                                tiles_2 = [tid for tid in self._oldHand[seatID] if tid//4==tgid+2]
+                                if len(tiles_1)==0 or len(tiles_2)==0: return False
+                                self._buildSet(seatID,[tid0,tiles_1[0],tiles_2[0]])
+                                self._state = {'Main':'PlayerXHandleDraw', 'X':role}
+                                return True
+                            else:
+                                return False
+                        elif chiMode=='X_Z':
+                            if tgid in range(1,8) or tgid in range(10,17) or tgid in range(19,26):
+                                tilesm1 = [tid for tid in self._oldHand[seatID] if tid//4==tgid-1]
+                                tilesp1 = [tid for tid in self._oldHand[seatID] if tid//4==tgid+1]
+                                if len(tilesm1)==0 or len(tilesp1)==0: return False
+                                self._buildSet(seatID,[tilesm1[0],tid0,tilesp1[0]])
+                                self._state = {'Main':'PlayerXHandleDraw', 'X':role}
+                                return True
+                            else:
+                                return False
+                        elif chiMode=='XY_':
+                            if tgid in range(2,9) or tgid in range(11,18) or tgid in range(20,27):
+                                tilesm1 = [tid for tid in self._oldHand[seatID] if tid//4==tgid-1]
+                                tilesm2 = [tid for tid in self._oldHand[seatID] if tid//4==tgid-2]
+                                if len(tilesm1)==0 or len(tilesm2)==0: return False
+                                self._buildSet(seatID,[tilesm2[0],tilesm1[0],tid0])
+                                self._state = {'Main':'PlayerXHandleDraw', 'X':role}
+                                return True
+                            else:
+                                return False
+                        else:
+                            return False
+                    elif actionType=='Win':
+                        if len(self._river[oppoSeatID])==0: return False
+                        tgids = [tid//4 for tid in (self._oldHand[seatID] + [self._river[oppoSeatID][-1]])]
+                        if not Check3Xn2(tgids): return False
+                        self._state = {'Main':'PlayerXWon','X':role}
+                        return True
             return False
         finally:
             logger.info(f'NewState={self._state}')
@@ -236,3 +300,5 @@ class GameState:
         if role==0: return 0
         if role==1: return 2
         return None
+    def finished(self):
+        return self._state['Main'] in ('PlayerXWon','Finished')
