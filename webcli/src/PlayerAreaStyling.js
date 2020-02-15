@@ -15,13 +15,16 @@ export function getDimensions(width, height) {
 }
 
 var TileGroupChars = ['🀇','🀈','🀉','🀊','🀋','🀌','🀍','🀎','🀏','🀐','🀑','🀒','🀓','🀔','🀕','🀖','🀗','🀘','🀙','🀚','🀛','🀜','🀝','🀞','🀟','🀠','🀡','🀀','🀁','🀂','🀃','🀆','🀅','🀄']
-
+var SeatChars = ['東','南','西','北']
 
 function getUCharByTid(tid) {
     var gid = Math.floor(tid/4)
     return TileGroupChars[gid]
 }
 
+export function getSeatChar(seat){
+    return SeatChars[seat]
+}
 export function getTileViewChar(tileView) {
     if (tileView) {
         if (tileView.IsValueVisible) {
@@ -31,5 +34,25 @@ export function getTileViewChar(tileView) {
         }
     } else {
         return undefined;
+    }
+}
+
+export function getActionUIData(action) {
+    switch (action.Type) {
+        case 'Discard':
+            return {
+                Type: 'Discard',
+                Value: getUCharByTid(action.Value)
+            }
+        case 'Tsumo':
+            return {
+                Type: 'Tsumo',
+                Value: 'Tsumo',
+            }
+        default:
+            return {
+                Type: 'Unknown',
+                Value: '🀇🀈🀉 🀇🀈🀉 🀇🀈🀉 🀇🀈🀉 🀐🀐',
+            }
     }
 }

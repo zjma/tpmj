@@ -4,7 +4,7 @@
         <mode-dialog :active="IsModeDialogActive" :default-mode="mode" @play-selected="onPlayModeSelected" @observe-selected="onObserveModeSelected" @cancelled="onModeSelectionCancelled" />
         <player-waiting-dialog :active="IsPlayerWaitingDialogActive" @cancelled="onPlayerWaitingCancelled" @selected="onPlayerGameSelected"/>
         <observer-waiting-dialog :active="IsObserverWaitingDialogActive" @cancelled="onObserverWaitingCancelled" @selected="onObservedGameSelected"/>
-        <minimum-digital-table :gameStateView="gameStateView" :mySeat="MySeat" @UserAction="onUserAction"/>
+        <minimum-digital-table :gameStateView="gameStateView" :myRole="MyRole" @UserAction="onUserAction"/>
     </v-app>
 </template>
 
@@ -41,7 +41,7 @@ export default {
             gameStateView       : Game2Util.randGameStateView(),
             counter             : 0,
             GameID              : uuid.v4(),
-            MyRole              : -1,
+            MyRole              : 0,
             PlayerWaitingQueryPending : false,
             PlayingQueryPending: false,
         }

@@ -82,14 +82,33 @@ export function randAreaData() {
     return {
         River       : getRandomTileViewList(Math.floor(Math.random()*17)+5),
         Mountain    : getRandomMountain(),
-        OldHand     : getRandomTileViewList((4-setCount)*3+1),
-        NewHand     : getRandomTileViewList(Math.floor(Math.random()*2)),
+        // OldHand     : getRandomTileViewList((4-setCount)*3+1),
+        // NewHand     : getRandomTileViewList(1),
+        OldHand     : [
+            {IsValueVisible : true, Value : 0,},
+            {IsValueVisible : true, Value : 1,},
+            {IsValueVisible : true, Value : 3,},
+            {IsValueVisible : true, Value : 4,},
+            {IsValueVisible : true, Value : 8,},
+            {IsValueVisible : true, Value : 12,},
+            {IsValueVisible : true, Value : 16,},
+            {IsValueVisible : true, Value : 20,},
+            {IsValueVisible : true, Value : 24,},
+            {IsValueVisible : true, Value : 28,},
+            {IsValueVisible : true, Value : 32,},
+            {IsValueVisible : true, Value : 33,},
+            {IsValueVisible : true, Value : 34,},
+        ],
+        NewHand     : [
+            {IsValueVisible : true, Value : 16,},
+        ],
         BuiltSets   : [...Array(setCount).keys()].map(getRandomSet),
     }
+
 }
 
 export function randGameStateView() {
-    return {
+    var obj = {
         AreaViews : [
             randAreaData(),
             randAreaData(),
@@ -97,8 +116,16 @@ export function randGameStateView() {
             randAreaData(),
         ],
         State : {
-        }
+            Main: 'PlayerXHandleDraw',
+            X: 0,
+        },
+        PlayerNames : [
+            'Player0',
+            'Player11111111111111111111111111111111111',
+        ],
     }
+
+    return obj
 }
 
 export function getRoleFromArea(area) {
@@ -170,6 +197,13 @@ export function getTidsFromViews() {
     //TODO
 }
 
+export function getTidFromTileView(view) {
+    if (view && view.IsValueVisible) {
+        return view.Value
+    }
+    return undefined
+}
+
 export function getTileGroupID(tid) {
     return Math.floor(tid/4)
 }
@@ -188,4 +222,117 @@ export function getKanOptions(gameStateView, role) {
         }
     }
     return []
+}
+
+export function getSeatByRole(role) {
+    return role*2
+}
+
+export function has3XSolutions(tgids) {
+    if (tgids.length==0) return true
+    if (tgids.length%3!=0) return false
+
+    var minfinder = function(accumulated, toProcess){
+        return Math.min(accumulated, toProcess)
+    }
+
+    var tgid0 = tgids.reduce(minfinder, 999)
+    var tgid0Count = tgids.filter(tgid => tgid==tgid0).length
+
+    if (tgid0>=0 && tgid0<=6 || tgid0>=9 && tgid0<=15 || tgid0>=18 && tgid0<=24) {
+        var tgid1Count = tgids.filter(tgid => tgid==tgid0+1).length
+        var tgid2Count = tgids.filter(tgid => tgid==tgid0+2).length
+        if (tgid1Count>=1 && tgid2Count>=1) {
+            var tmpTgids = tgids.slice(0)
+            tmpTgids.splice(tmpTgids.indexOf(tgid0),1)
+            tmpTgids.splice(tmpTgids.indexOf(tgid0+1),1)
+            tmpTgids.splice(tmpTgids.indexOf(tgid0+2),1)
+            if (has3XSolutions(tmpTgids)) return true
+        }
+    }
+
+    if (tgid0Count>=3) {
+        var tmqTgids = tgids.slice(0)
+        tmqTgids.splice(tmqTgids.indexOf(tgid0),1)
+        tmqTgids.splice(tmqTgids.indexOf(tgid0),1)
+        tmqTgids.splice(tmqTgids.indexOf(tgid0),1)
+        if (has3XSolutions(tmqTgids)) return true
+    }
+
+    return false
+}
+
+export function has3Xn2Solutions(tgids) {
+    window.console.log('Starting has3Xn2Solutions.')
+    window.console.log(tgids)
+    if (tgids.length%3!=2) {
+        return false
+    }
+    window.console.log('Initing counter.')
+    var tg2c = Array(34).fill(0)
+    window.console.log(tg2c)
+    for (const x of tgids) tg2c[x]++
+    window.console.log(tg2c)
+    for (var tgid=0; tgid<34; tgid++) {
+        if (tg2c[tgid]>=2) {
+            var tmpTgids = tgids.slice(0)
+            tmpTgids.splice(tmpTgids.indexOf(tgid), 1)
+            tmpTgids.splice(tmpTgids.indexOf(tgid), 1)
+            window.console.log('Got a pair. Remaining:')
+            window.console.log(tmpTgids)
+            if (has3XSolutions(tmpTgids)) {
+                return true
+            }
+        }
+    }
+
+    return false
+}
+
+export function getTsumoActions(gameStateView, role) {
+    window.console.log(gameStateView, role)
+    var seat = getSeatByRole(role)
+    var oldTids = gameStateView.AreaViews[seat].OldHand.map(v => getTidFromTileView(v)).filter(v => v!=undefined)
+    var newTids = gameStateView.AreaViews[seat].NewHand.map(v => getTidFromTileView(v)).filter(v => v!=undefined)
+    var tids = oldTids.concat(newTids).sort()
+    var tgids = tids.map(tid => getTileGroupID(tid))
+    return has3Xn2Solutions(tgids) ? [{Type:'Tsumo'}] : []
+}
+
+export function getKan0Actions(gameStateView, role) {
+    window.console.log(gameStateView, role)
+    return [] //TODO
+}
+
+export function getKan2Actions(gameStateView, role) {
+    window.console.log(gameStateView, role)
+    return [] //TODO
+}
+
+export function getAction(gameStateView, role) {
+    if (gameStateView.State.Main == 'PlayerXHandleDraw' && gameStateView.State.X == role) {
+        var result = []
+        result = result.concat(getTsumoActions(gameStateView, role))
+        result = result.concat(getKan0Actions(gameStateView, role))
+        result = result.concat(getKan2Actions(gameStateView, role))
+        result = result.concat(gameStateView.AreaViews[role].NewHand.map(v => getTidFromTileView(v)).filter(v => v!=undefined).map(tid => ({Type:'Discard', Value:tid})))
+        result = result.concat(gameStateView.AreaViews[role].OldHand.map(v => getTidFromTileView(v)).filter(v => v!=undefined).map(tid => ({Type:'Discard', Value:tid})))
+        return result
+    }
+    return [
+        {
+            'Type':'Tsumo',
+            'Value':[
+                [0,0,0,],
+                [10,10,10,],
+                [20,20,20,],
+                [30,30,30,],
+                [40,40],
+            ],
+        },
+        {
+            'Type':'Kan',
+            'Value':[0,0,0,0],
+        },
+    ]
 }
