@@ -78,31 +78,39 @@ export function getRandomMountain(){
 }
 
 export function randAreaData() {
-    var setCount = Utils.randInt(0, 5)
+    // var setCount = Utils.randInt(0, 5)
     return {
-        River       : getRandomTileViewList(Math.floor(Math.random()*17)+5),
+        // River       : getRandomTileViewList(Math.floor(Math.random()*17)+5),
+        River       : [
+            {IsValueVisible : true, Value : 4,},
+        ],
         Mountain    : getRandomMountain(),
         // OldHand     : getRandomTileViewList((4-setCount)*3+1),
         // NewHand     : getRandomTileViewList(1),
         OldHand     : [
-            {IsValueVisible : true, Value : 0,},
-            {IsValueVisible : true, Value : 1,},
             {IsValueVisible : true, Value : 3,},
-            {IsValueVisible : true, Value : 4,},
-            {IsValueVisible : true, Value : 8,},
+            {IsValueVisible : true, Value : 5,},
+            {IsValueVisible : true, Value : 6,},
+            {IsValueVisible : true, Value : 7,},
+            {IsValueVisible : true, Value : 9,},
+            {IsValueVisible : true, Value : 10,},
+            {IsValueVisible : true, Value : 11,},
             {IsValueVisible : true, Value : 12,},
-            {IsValueVisible : true, Value : 16,},
-            {IsValueVisible : true, Value : 20,},
-            {IsValueVisible : true, Value : 24,},
-            {IsValueVisible : true, Value : 28,},
-            {IsValueVisible : true, Value : 32,},
-            {IsValueVisible : true, Value : 33,},
-            {IsValueVisible : true, Value : 34,},
+            {IsValueVisible : true, Value : 13,},
+            {IsValueVisible : true, Value : 14,},
         ],
         NewHand     : [
-            {IsValueVisible : true, Value : 16,},
         ],
-        BuiltSets   : [...Array(setCount).keys()].map(getRandomSet),
+        // BuiltSets   : [...Array(setCount).keys()].map(getRandomSet),
+        BuiltSets   : [
+            {
+                'TileViews': [
+                    {IsValueVisible : true, Value : 0,},
+                    {IsValueVisible : true, Value : 1,},
+                    {IsValueVisible : true, Value : 2,},
+                ],
+            },
+        ],
     }
 
 }
@@ -116,7 +124,7 @@ export function randGameStateView() {
             randAreaData(),
         ],
         State : {
-            Main: 'PlayerXHandleDraw',
+            Main: 'PlayerXToRespondToDiscard',
             X: 0,
         },
         PlayerNames : [
@@ -193,10 +201,6 @@ export function getRoleBySeatID(seatID) {
     return (seatID == 0) ? 0 : (seatID == 2) ? 1 : undefined
 }
 
-export function getTidsFromViews() {
-    //TODO
-}
-
 export function getTidFromTileView(view) {
     if (view && view.IsValueVisible) {
         return view.Value
@@ -205,39 +209,38 @@ export function getTidFromTileView(view) {
 }
 
 export function getTileGroupID(tid) {
+    if (tid==undefined) return undefined
     return Math.floor(tid/4)
-}
-
-export function getKanOptions(gameStateView, role) {
-    var seatID = 0 //TODO
-    var oldHandTids = getTidsFromViews(gameStateView.AreaViews[seatID].OldHand)
-    var newHandTids = getTidsFromViews(gameStateView.AreaViews[seatID].NewHand)
-    var handTids = oldHandTids.concat(newHandTids)
-    handTids.sort()
-    if (gameStateView.State.Main == 'PlayerXHandleDraw' && gameStateView.State.X == role) {
-        for (var tgid=0; tgid<34; tgid++) {
-            if (handTids.filter(tid => (getTileGroupID(tid)==tgid)).length == 4) {
-                //TODO
-            }
-        }
-    }
-    return []
 }
 
 export function getSeatByRole(role) {
     return role*2
 }
 
-export function has3XSolutions(tgids) {
-    if (tgids.length==0) return true
-    if (tgids.length%3!=0) return false
+var minfinder = function(accumulated, toProcess){
+    return Math.min(accumulated, toProcess)
+}
 
-    var minfinder = function(accumulated, toProcess){
-        return Math.min(accumulated, toProcess)
-    }
+export function get3XSolutions(tgids, allowTgid0Triplet) {
+    if (tgids.length==0) return [[]]
+    if (tgids.length%3!=0) return []
 
+    var result = []
     var tgid0 = tgids.reduce(minfinder, 999)
     var tgid0Count = tgids.filter(tgid => tgid==tgid0).length
+
+    if (tgid0Count>=3 && allowTgid0Triplet) {
+        var tmqTgids = tgids.slice(0)
+        tmqTgids.splice(tmqTgids.indexOf(tgid0),1)
+        tmqTgids.splice(tmqTgids.indexOf(tgid0),1)
+        tmqTgids.splice(tmqTgids.indexOf(tgid0),1)
+
+        var allowed = (tgid0Count == 3)
+
+        for (const subSol of get3XSolutions(tmqTgids, allowed)) {
+            result.push([[tgid0,tgid0,tgid0]].concat(subSol))
+        }
+    }
 
     if (tgid0>=0 && tgid0<=6 || tgid0>=9 && tgid0<=15 || tgid0>=18 && tgid0<=24) {
         var tgid1Count = tgids.filter(tgid => tgid==tgid0+1).length
@@ -247,92 +250,276 @@ export function has3XSolutions(tgids) {
             tmpTgids.splice(tmpTgids.indexOf(tgid0),1)
             tmpTgids.splice(tmpTgids.indexOf(tgid0+1),1)
             tmpTgids.splice(tmpTgids.indexOf(tgid0+2),1)
-            if (has3XSolutions(tmpTgids)) return true
+
+            var allowed2 = (tgid0Count == 1)
+
+            for (const subSol of get3XSolutions(tmpTgids, allowed2)) {
+                result.push([[tgid0,tgid0+1,tgid0+2]].concat(subSol))
+            }
         }
     }
 
-    if (tgid0Count>=3) {
-        var tmqTgids = tgids.slice(0)
-        tmqTgids.splice(tmqTgids.indexOf(tgid0),1)
-        tmqTgids.splice(tmqTgids.indexOf(tgid0),1)
-        tmqTgids.splice(tmqTgids.indexOf(tgid0),1)
-        if (has3XSolutions(tmqTgids)) return true
-    }
-
-    return false
+    return result
 }
 
-export function has3Xn2Solutions(tgids) {
-    window.console.log('Starting has3Xn2Solutions.')
-    window.console.log(tgids)
+export function get3Xn2Solutions(tgids) {
+    window.console.log((new Date()).getTime())
     if (tgids.length%3!=2) {
-        return false
+        return []
     }
-    window.console.log('Initing counter.')
+
+    var result = []
+
     var tg2c = Array(34).fill(0)
-    window.console.log(tg2c)
     for (const x of tgids) tg2c[x]++
-    window.console.log(tg2c)
+
     for (var tgid=0; tgid<34; tgid++) {
         if (tg2c[tgid]>=2) {
             var tmpTgids = tgids.slice(0)
             tmpTgids.splice(tmpTgids.indexOf(tgid), 1)
             tmpTgids.splice(tmpTgids.indexOf(tgid), 1)
-            window.console.log('Got a pair. Remaining:')
-            window.console.log(tmpTgids)
-            if (has3XSolutions(tmpTgids)) {
-                return true
+            for (const subSol of get3XSolutions(tmpTgids, true)) {
+                result.push(subSol.concat([[tgid,tgid]]))
             }
         }
     }
 
-    return false
+    window.console.log((new Date()).getTime())
+    window.console.log(result)
+    return result
+}
+
+function getTidSolution(tids, gtidsol) {
+    window.console.log('Startinig getTidSolution.')
+    window.console.log(tids)
+    window.console.log(gtidsol)
+
+    var tg2tids = [...Array(34).keys()].map(() => ([]))
+
+    for (const tid of tids) {
+        var tgid = getTileGroupID(tid)
+        tg2tids[tgid].push(tid)
+    }
+
+    window.console.log('getTidSolution checkpoint 0')
+    window.console.log(tg2tids)
+
+    var result = []
+
+    for (const part of gtidsol) {
+        var subresult = []
+
+        for (const tgid of part) {
+            subresult.push(tg2tids[tgid].pop())
+        }
+
+        result.push(subresult)
+    }
+
+    window.console.log('Finishing getTidSolution')
+    window.console.log(result)
+    return result
+}
+
+export function getTidListFromTileViewList(tvlist) {
+    return tvlist.map(v => getTidFromTileView(v))
+}
+
+export function getTripletTileGroupID(tids) {
+    if (tids.length != 3) return undefined
+    var tgid0 = getTileGroupID(tids[0])
+    var tgid1 = getTileGroupID(tids[1])
+    var tgid2 = getTileGroupID(tids[2])
+    if (tgid0 == tgid1 && tgid0==tgid2) return tgid0
+    return undefined
 }
 
 export function getTsumoActions(gameStateView, role) {
-    window.console.log(gameStateView, role)
     var seat = getSeatByRole(role)
     var oldTids = gameStateView.AreaViews[seat].OldHand.map(v => getTidFromTileView(v)).filter(v => v!=undefined)
     var newTids = gameStateView.AreaViews[seat].NewHand.map(v => getTidFromTileView(v)).filter(v => v!=undefined)
-    var tids = oldTids.concat(newTids).sort()
+    var tids = oldTids.concat(newTids)
+    tids.sort((a, b) => a - b)
     var tgids = tids.map(tid => getTileGroupID(tid))
-    return has3Xn2Solutions(tgids) ? [{Type:'Tsumo'}] : []
+    var result = get3Xn2Solutions(tgids).map(gtidsol => ({Type:'Tsumo',Value:getTidSolution(tids, gtidsol)}))
+    return result
+}
+
+export function getRonActions(gameStateView, role) {
+    var seat = getSeatByRole(role)
+    var opposeat = getSeatByRole(1-role)
+    var oldTids = gameStateView.AreaViews[seat].OldHand.map(v => getTidFromTileView(v)).filter(v => v!=undefined)
+    var oppoRiver = gameStateView.AreaViews[opposeat].River
+    var discardedTid = getTidFromTileView(oppoRiver[oppoRiver.length-1])
+    var tids = oldTids.concat([discardedTid]).filter(x => x!=undefined)
+    tids.sort((a, b) => a - b)
+    var tgids = tids.map(tid => getTileGroupID(tid))
+    var result = get3Xn2Solutions(tgids).map(gtidsol => ({Type:'Ron',Value:getTidSolution(tids, gtidsol)}))
+    return result
+}
+
+export function getPonActions(gameStateView, role) {
+    var seat = getSeatByRole(role)
+    var opposeat = getSeatByRole(1-role)
+    var oldTids = gameStateView.AreaViews[seat].OldHand.map(v => getTidFromTileView(v)).filter(v => v!=undefined)
+    var oppoRiver = gameStateView.AreaViews[opposeat].River
+    var discardedTid = getTidFromTileView(oppoRiver[oppoRiver.length-1])
+    var discardedTgid = getTileGroupID(discardedTid)
+
+    var ponCandTids = oldTids.filter(tid => getTileGroupID(tid)==discardedTgid)
+    if (ponCandTids.length >= 2) {
+        return [
+            {
+                Type : 'Pon',
+                Value : ponCandTids.slice(0,2).concat([discardedTid]),
+            }
+        ]
+    }
+
+    return []
+}
+
+export function getChiActions(gameStateView, role) {
+    var seat = getSeatByRole(role)
+    var opposeat = getSeatByRole(1-role)
+    var oldTids = gameStateView.AreaViews[seat].OldHand.map(v => getTidFromTileView(v)).filter(v => v!=undefined)
+    var oppoRiver = gameStateView.AreaViews[opposeat].River
+    var discardedTid = getTidFromTileView(oppoRiver[oppoRiver.length-1])
+    var discardedTgid = getTileGroupID(discardedTid)
+    if (discardedTgid == undefined) return []
+
+    var result = []
+
+    var candm1s = oldTids.filter(tid => getTileGroupID(tid)==discardedTgid-1)
+    var candm2s = oldTids.filter(tid => getTileGroupID(tid)==discardedTgid-2)
+    var candp1s = oldTids.filter(tid => getTileGroupID(tid)==discardedTgid+1)
+    var candp2s = oldTids.filter(tid => getTileGroupID(tid)==discardedTgid+2)
+
+    if (discardedTgid>=2 && discardedTgid<=8 || discardedTgid>=11 && discardedTgid<=17 || discardedTgid>=20 && discardedTgid<26 && candm2s.length>=1 && candm1s.length>=1) {
+        result.push({
+            Type:'Chi',
+            Value:[candm2s[0],candm1s[0],discardedTid],
+        })
+    }
+
+    if (discardedTgid>=1 && discardedTgid<=7 || discardedTgid>=10 && discardedTgid<=16 || discardedTgid>=19 && discardedTgid<25 && candm1s.length>=1 && candp1s.length>=1) {
+        result.push({
+            Type:'Chi',
+            Value:[candm1s[0],discardedTid,candp1s[0]],
+        })
+    }
+
+    if (discardedTgid>=0 && discardedTgid<=6 || discardedTgid>=9 && discardedTgid<=15 || discardedTgid>=18 && discardedTgid<24 && candp1s.length>=1 && candp2s.length>=1) {
+        result.push({
+            Type:'Chi',
+            Value:[discardedTid,candp1s[0],candp2s[0]],
+        })
+    }
+
+    return result
 }
 
 export function getKan0Actions(gameStateView, role) {
-    window.console.log(gameStateView, role)
-    return [] //TODO
+    var seatID = getSeatByRole(role)
+    var oldHandTids = gameStateView.AreaViews[seatID].OldHand.map(v => getTidFromTileView(v))
+    var newHandTids = gameStateView.AreaViews[seatID].NewHand.map(v => getTidFromTileView(v))
+    var tids = oldHandTids.concat(newHandTids)
+    var tg2c = Array(34).fill(0)
+    for (const tid of tids) tg2c[getTileGroupID(tid)]++
+    var result = [...tg2c.keys()].map(idx => ({TileGroupID:idx,TileCount:tg2c[idx]})).filter(x => x.TileCount>=4).map(x => ({Type:'Kan0',Value:[x.TileGroupID*4,x.TileGroupID*4+1,x.TileGroupID*4+2,x.TileGroupID*4+3]}))
+    return result
+}
+
+export function getKan1Actions(gameStateView, role) {
+    var seat = getSeatByRole(role)
+    var opposeat = getSeatByRole(1-role)
+    var oldTids = gameStateView.AreaViews[seat].OldHand.map(v => getTidFromTileView(v)).filter(v => v!=undefined)
+    var oppoRiver = gameStateView.AreaViews[opposeat].River
+    var discardedTid = getTidFromTileView(oppoRiver[oppoRiver.length-1])
+    var discardedTgid = getTileGroupID(discardedTid)
+
+    if (oldTids.filter(tid => getTileGroupID(tid)==discardedTgid).length >= 3) {
+        return [
+            {
+                Type : 'Kan1',
+                Value : [discardedTgid*4,discardedTgid*4+1,discardedTgid*4+2,discardedTgid*4+3,],
+            }
+        ]
+    }
+
+    return []
 }
 
 export function getKan2Actions(gameStateView, role) {
-    window.console.log(gameStateView, role)
-    return [] //TODO
+    var seatID = getSeatByRole(role)
+    var oldHandTids = gameStateView.AreaViews[seatID].OldHand.map(v => getTidFromTileView(v))
+    var newHandTids = gameStateView.AreaViews[seatID].NewHand.map(v => getTidFromTileView(v))
+    var tids = oldHandTids.concat(newHandTids)
+    var handTgids = tids.map(tid => getTileGroupID(tid))
+
+    return gameStateView.AreaViews[seatID].BuiltSets.map(function(setview){
+        var tids = getTidListFromTileViewList(setview.TileViews)
+        var tgid = getTripletTileGroupID(tids)
+        return {
+            Tiles : tids,
+            TripletTileGroupID: tgid,
+        }
+    }).filter(
+        o => o.TripletTileGroupID!=undefined && handTgids.indexOf(o.TripletTileGroupID)>=0
+    ).map(function(o){
+        return {
+            Type : 'Kan2',
+            Value: [o.TripletTileGroupID*4,o.TripletTileGroupID*4+1,o.TripletTileGroupID*4+2,o.TripletTileGroupID*4+3],
+        }
+    })
+}
+
+function tgDuplicatingTidRemover(accumulated, toProcess) {
+    var tgid = getTileGroupID(toProcess)
+
+    if (accumulated.filter(tid => getTileGroupID(tid) == tgid).length >= 1) {
+        return accumulated
+    } else {
+        return accumulated.concat([toProcess])
+    }
+}
+
+export function getDiscardNewActions(gameStateView, role) {
+    var seat = getSeatByRole(role)
+    return gameStateView.AreaViews[seat].NewHand.map(v => getTidFromTileView(v)).filter(v => v!=undefined).reduce(tgDuplicatingTidRemover, []).map(tid => ({Type:'Discard', Source:'NewHand', Value:tid}))
+}
+
+export function getDiscardOldActions(gameStateView, role) {
+    var seat = getSeatByRole(role)
+    return gameStateView.AreaViews[seat].OldHand.map(v => getTidFromTileView(v)).filter(v => v!=undefined).reduce(tgDuplicatingTidRemover, []).map(tid => ({Type:'Discard', Source:'OldHand', Value:tid}))
+}
+
+export function getDrawActions() {
+    return {
+        Type: 'Draw',
+    }
 }
 
 export function getAction(gameStateView, role) {
+    var result = []
+
     if (gameStateView.State.Main == 'PlayerXHandleDraw' && gameStateView.State.X == role) {
-        var result = []
         result = result.concat(getTsumoActions(gameStateView, role))
         result = result.concat(getKan0Actions(gameStateView, role))
         result = result.concat(getKan2Actions(gameStateView, role))
-        result = result.concat(gameStateView.AreaViews[role].NewHand.map(v => getTidFromTileView(v)).filter(v => v!=undefined).map(tid => ({Type:'Discard', Value:tid})))
-        result = result.concat(gameStateView.AreaViews[role].OldHand.map(v => getTidFromTileView(v)).filter(v => v!=undefined).map(tid => ({Type:'Discard', Value:tid})))
+        result = result.concat(getDiscardNewActions(gameStateView, role))
+        result = result.concat(getDiscardOldActions(gameStateView, role))
         return result
     }
-    return [
-        {
-            'Type':'Tsumo',
-            'Value':[
-                [0,0,0,],
-                [10,10,10,],
-                [20,20,20,],
-                [30,30,30,],
-                [40,40],
-            ],
-        },
-        {
-            'Type':'Kan',
-            'Value':[0,0,0,0],
-        },
-    ]
+
+    if (gameStateView.State.Main == 'PlayerXToRespondToDiscard' && gameStateView.State.X == role) {
+        result = result.concat(getDrawActions())
+        result = result.concat(getRonActions(gameStateView, role))
+        result = result.concat(getKan1Actions(gameStateView, role))
+        result = result.concat(getPonActions(gameStateView, role))
+        result = result.concat(getChiActions(gameStateView, role))
+        return result
+    }
+
+    return []
 }

@@ -22,6 +22,10 @@ function getUCharByTid(tid) {
     return TileGroupChars[gid]
 }
 
+function getTidListStr(tids) {
+    return tids.map(tid => getUCharByTid(tid)).join('')
+}
+
 export function getSeatChar(seat){
     return SeatChars[seat]
 }
@@ -39,15 +43,59 @@ export function getTileViewChar(tileView) {
 
 export function getActionUIData(action) {
     switch (action.Type) {
-        case 'Discard':
+        case 'Draw':
             return {
-                Type: 'Discard',
-                Value: getUCharByTid(action.Value)
+                Type: 'Pass',
+            }
+        case 'Discard':
+            switch (action.Source) {
+                case 'NewHand':
+                    return {
+                        Type: 'Discard New',
+                        Value: getUCharByTid(action.Value)
+                    }
+                case 'OldHand':
+                    return {
+                        Type: 'Discard Old',
+                        Value: getUCharByTid(action.Value)
+                    }
+                default:
+                    return undefined
             }
         case 'Tsumo':
             return {
                 Type: 'Tsumo',
-                Value: 'Tsumo',
+                Value: action.Value.map(tids => getTidListStr(tids)).join(' '),
+            }
+        case 'Ron':
+            return {
+                Type: 'Ron',
+                Value: action.Value.map(tids => getTidListStr(tids)).join(' '),
+            }
+        case 'Chi':
+            return {
+                Type: 'Chi',
+                Value: action.Value.map(tid => getUCharByTid(tid)).join(''),
+            }
+        case 'Pon':
+            return {
+                Type: 'Pon',
+                Value: action.Value.map(tid => getUCharByTid(tid)).join(''),
+            }
+        case 'Kan0':
+            return {
+                Type: 'Kan',
+                Value: action.Value.map(tid => getUCharByTid(tid)).join(''),
+            }
+        case 'Kan1':
+            return {
+                Type: 'Kan',
+                Value: action.Value.map(tid => getUCharByTid(tid)).join(''),
+            }
+        case 'Kan2':
+            return {
+                Type: 'Kan+',
+                Value: action.Value.map(tid => getUCharByTid(tid)).join(''),
             }
         default:
             return {
