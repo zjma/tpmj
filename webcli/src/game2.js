@@ -83,6 +83,8 @@ export function randAreaData() {
         // River       : getRandomTileViewList(Math.floor(Math.random()*17)+5),
         River       : [
             {IsValueVisible : true, Value : 4,},
+            {IsValueVisible : true, Value : 121,},
+            {IsValueVisible : true, Value : 133,},
         ],
         Mountain    : getRandomMountain(),
         // OldHand     : getRandomTileViewList((4-setCount)*3+1),
@@ -97,7 +99,7 @@ export function randAreaData() {
             {IsValueVisible : true, Value : 11,},
             {IsValueVisible : true, Value : 12,},
             {IsValueVisible : true, Value : 13,},
-            {IsValueVisible : true, Value : 14,},
+            {IsValueVisible : true, Value : 132,},
         ],
         NewHand     : [
         ],
@@ -108,6 +110,13 @@ export function randAreaData() {
                     {IsValueVisible : true, Value : 0,},
                     {IsValueVisible : true, Value : 1,},
                     {IsValueVisible : true, Value : 2,},
+                ],
+            },
+            {
+                'TileViews': [
+                    {IsValueVisible : true, Value : 132,},
+                    {IsValueVisible : true, Value : 134,},
+                    {IsValueVisible : true, Value : 135,},
                 ],
             },
         ],

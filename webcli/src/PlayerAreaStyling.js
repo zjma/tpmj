@@ -14,7 +14,7 @@ export function getDimensions(width, height) {
     return ret
 }
 
-var TileGroupChars = ['🀇','🀈','🀉','🀊','🀋','🀌','🀍','🀎','🀏','🀐','🀑','🀒','🀓','🀔','🀕','🀖','🀗','🀘','🀙','🀚','🀛','🀜','🀝','🀞','🀟','🀠','🀡','🀀','🀁','🀂','🀃','🀆','🀅','🀄']
+var TileGroupChars = ['🀇','🀈','🀉','🀊','🀋','🀌','🀍','🀎','🀏','🀐','🀑','🀒','🀓','🀔','🀕','🀖','🀗','🀘','🀙','🀚','🀛','🀜','🀝','🀞','🀟','🀠','🀡','🀀','🀁','🀂','🀃','🀆','🀅','🀥']
 var SeatChars = ['東','南','西','北']
 
 function getUCharByTid(tid) {
@@ -52,13 +52,13 @@ export function getActionUIData(action) {
             switch (action.Source) {
                 case 'NewHand':
                     return {
-                        Type: 'Discard New',
+                        Type: 'Discard*',
                         Value: getUCharByTid(action.Value),
                         Data: action,
                     }
                 case 'OldHand':
                     return {
-                        Type: 'Discard Old',
+                        Type: 'Discard',
                         Value: getUCharByTid(action.Value),
                         Data: action,
                     }

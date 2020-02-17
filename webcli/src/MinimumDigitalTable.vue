@@ -11,21 +11,21 @@
                                         {{OppoRoleLabel}}
                                     </div>
                                 </v-card-title>
-                                <v-card-text>
+                                <v-card-text class='PlayerName'>
                                     {{OppoName}}
                                 </v-card-text>
                             </v-card>
                         </v-col>
                         <v-col>
-                            <div class='RiverRow'>
+                            <div class='RiverRow TileOnlyContainer'>
                                 {{OppoRiver}}
                             </div>
                         </v-col>
                     </v-row>
-                    <div class='Hand'>
+                    <div class='Hand TileOnlyContainer'>
                         {{OppoHand}}
                     </div>
-                    <v-row>
+                    <v-row class='TileOnlyContainer'>
                         <v-col>{{OppoSet3}}</v-col>
                         <v-col>{{OppoSet2}}</v-col>
                         <v-col>{{OppoSet1}}</v-col>
@@ -50,15 +50,15 @@
                             </v-card>
                         </v-col>
                         <v-col>
-                            <div class='RiverRow'>
+                            <div class='RiverRow TileOnlyContainer'>
                                 {{SelfRiver}}
                             </div>
                         </v-col>
                     </v-row>
-                    <div class='Hand'>
+                    <div class='Hand TileOnlyContainer'>
                         {{SelfHand}}
                     </div>
-                    <v-row>
+                    <v-row class='TileOnlyContainer'>
                         <v-col>{{SelfSet3}}</v-col>
                         <v-col>{{SelfSet2}}</v-col>
                         <v-col>{{SelfSet1}}</v-col>
@@ -70,7 +70,7 @@
                 <v-list two-line>
                     <v-list-item v-for='(action,idx) in ActionUiData' :key='idx' @click="onAction(action.Data)">
                         <v-list-item-content>
-                            <v-list-item-title style="font-size: 1em;">{{action.Value}}</v-list-item-title>
+                            <v-list-item-title class='TileOnlyContainer' style="font-size: 1em;">{{action.Value}}</v-list-item-title>
                             <v-list-item-subtitle>{{action.Type}}</v-list-item-subtitle>
                         </v-list-item-content>
                     </v-list-item>
@@ -210,10 +210,6 @@ export default {
 </script>
 
 <style>
-.ActionCard {
-    width: 100%;
-}
-
 .PlayerName {
     white-space: nowrap;
     overflow: hidden;
@@ -241,17 +237,6 @@ export default {
     font-size: 1em;
 }
 
-.OldHand {
-    justify-content: right;
-    display: grid;
-    font-family: 'Segoe UI Symbol';
-}
-
-.Hand {
-}
-#TheRow {
-    height: 250px;
-}
 .PlayerActions {
     height: 30vh;
     overflow-y: scroll;
@@ -259,5 +244,9 @@ export default {
 
 .ActionPreview {
     font-size: 2rem;
+}
+
+.TileOnlyContainer {
+    font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans",sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol","Noto Color Emoji";
 }
 </style>
