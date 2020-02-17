@@ -36,8 +36,7 @@ export default {
         return {
             UserName            : 'NoName',
             mode                : 'Play',
-            State               : '?',
-            // State               : 'UserLoggingIn',
+            State               : 'UserLoggingIn',
             MySeat              : 0,
             gameStateView       : Game2Util.randGameStateView(),
             counter             : 0,
