@@ -4,7 +4,7 @@
         <mode-dialog :active="IsModeDialogActive" :default-mode="mode" @play-selected="onPlayModeSelected" @observe-selected="onObserveModeSelected" @cancelled="onModeSelectionCancelled" />
         <player-waiting-dialog :active="IsPlayerWaitingDialogActive" @cancelled="onPlayerWaitingCancelled" @selected="onPlayerGameSelected"/>
         <observer-waiting-dialog :active="IsObserverWaitingDialogActive" @cancelled="onObserverWaitingCancelled" @selected="onObservedGameSelected"/>
-        <mahjong-table :gameStateView="gameStateView" :mySeat="MySeat" @UserAction="onUserAction" />
+        <minimum-digital-table :gameStateView="gameStateView" :myRole="MyRole" @UserAction="onUserAction"/>
     </v-app>
 </template>
 
@@ -20,7 +20,7 @@ import LoginDialog from './LoginDialog.vue'
 import ModeDialog from './ModeDialog.vue'
 import ObserverWaitingDialog from './ObserverWaitingDialog.vue'
 import PlayerWaitingDialog from './PlayerWaitingDialog.vue'
-import MahjongTable from './MahjongTable.vue'
+import MinimumDigitalTable from './MinimumDigitalTable.vue'
 
 export default {
     name: 'App',
@@ -30,18 +30,19 @@ export default {
         'mode-dialog'               : ModeDialog,
         'observer-waiting-dialog'   : ObserverWaitingDialog,
         'player-waiting-dialog'     : PlayerWaitingDialog,
-        'mahjong-table'             : MahjongTable,
+        'minimum-digital-table'     : MinimumDigitalTable,
     },
     data: function() {
         return {
             UserName            : 'NoName',
             mode                : 'Play',
-            State               : 'UserLoggingIn',
+            State               : '?',
+            // State               : 'UserLoggingIn',
             MySeat              : 0,
             gameStateView       : Game2Util.randGameStateView(),
             counter             : 0,
             GameID              : uuid.v4(),
-            MyRole              : -1,
+            MyRole              : 0,
             PlayerWaitingQueryPending : false,
             PlayingQueryPending: false,
         }
@@ -150,14 +151,11 @@ export default {
         onUserAction(action){
             window.console.log("User action!")
             window.console.log(action)
-            if (action.Area != 'Self') {
-                return
-            }
             axios.post(process.env.VUE_APP_API_SERVER_URL, {
                 Action:'PerformGameAction',
                 GameID:this.GameID,
                 RoleID: this.MyRole,
-                Payload:Game2Util.getActionPayload(action.Action),
+                Payload:action,
             })
         }
     },

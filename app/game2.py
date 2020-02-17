@@ -1,4 +1,6 @@
 import random
+import itertools
+
 from copy import deepcopy
 import logging
 
@@ -38,6 +40,41 @@ def Check3Xn2(tgids):
             tmpTgids.remove(tgid)
             if Check3X(tmpTgids): return True
     return False
+
+def CheckTriplet(tids):
+    if type(tids)!=list: return False
+    if len(tids)!=3: return False
+    if len(set(tids))!=3: return False
+    tgids = [tid // 4 for tid in tids]
+    return tgids[0]==tgids[1] and tgids[0]==tgids[2]
+
+def CheckSequence(tids):
+    if type(tids)!=list: return False
+    if len(tids)!=3: return False
+    tids = sorted(tids)
+    tgids = [tid // 4 for tid in tids]
+    return tgids[0]+1==tgids[1] and tgids[1]+1==tgids[2] and (tgids[0] in range(0,7) or tgids[0] in range(9,16) or tgids[0] in range(18,25))
+
+def CheckQuad(tids):
+    if type(tids)!=list: return False
+    if len(tids)!=4: return False
+    if len(set(tids))!=4: return False
+    tgids = [tid // 4 for tid in tids]
+    return tgids[0]==tgids[1] and tgids[0]==tgids[2] and tgids[0]==tgids[3]
+
+def CheckPair(tids):
+    if type(tids)!=list: return False
+    if len(tids)!=2: return False
+    if len(set(tids))!=2: return False
+    tgids = [tid // 4 for tid in tids]
+    return tgids[0]==tgids[1]
+
+def getWinRequestTileSet(req):
+    result = set()
+    for grp in req:
+        for tid in grp:
+            result.add(tid)
+    return result
 
 class Mountain:
     def __init__(self):
@@ -96,14 +133,21 @@ class Mountain:
 
 class Set:
     def __init__(self, tiles):
-        self._tiles = tiles
+        self._tiles = sorted(tiles)
     def toSetView(self):
         return {
             'TileViews' : [{'IsValueVisible':True,'Value':tid} for tid in sorted(self._tiles)],
         }
-
+    def addTile(self, tid):
+        self._tiles.append(tid)
+        self._tiles.sort()
+    def isTriplet(self): return CheckTriplet(self._tiles)
+    def isSequence(self): return CheckSequence(self._tiles)
+    def isQuad(self): return CheckQuad(self._tiles)
+    def getTiles(self): return self._tiles
 class GameState:
-    def __init__(self):
+    def __init__(self, player0, player1):
+        self._playerNames = [player0, player1]
         self._river = [
             [],
             [],
@@ -133,6 +177,7 @@ class GameState:
                 self._getAreaViewBySeatID(3,role),
             ],
             'State' : self._state,
+            'PlayerNames' : self._playerNames,
         }
 
     def _getMountainViewBySeatID(self, seatID, role):
@@ -173,90 +218,158 @@ class GameState:
                 if role==self._state.get('X',None):
                     seatID = self._getSeatIDByRole(role)
                     actionType = action.get('Type',None)
-                    if actionType=='DiscardFromHand':
-                        fromOldHand = action.get('FromOldHand', False)
-                        idx = action.get('Index',999)
-                        if idx>=0 and fromOldHand and idx<len(self._oldHand[seatID]) or not fromOldHand and idx<len(self._newHand[seatID]):
-                            self._discardFromHandToRiver(seatID,fromOldHand,idx)
+                    if actionType=='Discard':
+                        src = action.get('Source', None)
+                        tid = action.get('Value', None)
+                        if src=='OldHand' and tid in self._oldHand[seatID] or src=='NewHand' and tid in self._newHand[seatID]:
+                            fromOldHand = src=='OldHand'
+                            self._discardFromHandToRiver(seatID,fromOldHand,tid)
                             self._organizeHand(seatID)
                             self._state = {'Main':'PlayerXToRespondToDiscard','X':1-role}
                             return True
-                    if actionType=='Win':
-                        tgids = [tid//4 for tid in (self._oldHand[seatID] + self._newHand[seatID])]
-                        if not Check3Xn2(tgids): return False
+                    if actionType=='Tsumo':
+                        val = action.get('Value', [])
+                        logger.debug(f'RequestedDecomposition={val}')
+                        # Check if provided tiles matches what the player have in hand.
+                        expectedTileSet = set(self._oldHand[seatID]+self._newHand[seatID])
+                        actualTileSet = set(itertools.chain.from_iterable(val))
+                        logger.debug(f'expectedTileSet={expectedTileSet}')
+                        logger.debug(f'actualTileSet={actualTileSet}')
+                        if actualTileSet != expectedTileSet: return False
+                        # Check if the decomposition has 1 pair.
+                        pairs = [0 for grp in val if CheckPair(grp)]
+                        logger.debug(f'pairs={pairs}')
+                        if len(pairs) != 1: return False
+                        # Check if the decomposition has n-1 set.
+                        sets = [0 for grp in val if CheckTriplet(grp) or CheckSequence(grp)]
+                        logger.debug(f'sets={sets}')
+                        if len(sets) != len(val)-1: return False
                         self._state = {'Main':'PlayerXWon','X':role}
                         return True
-
+                    if actionType=='Kan0':
+                        tids = action.get('Value',None)
+                        logger.debug(f'tids={tids}')
+                        if not CheckQuad(tids): return False
+                        tidSet = set(tids)
+                        handSet = set(self._oldHand[seatID]+self._newHand[seatID])
+                        logger.debug(f'tidSet={tidSet}')
+                        logger.debug(f'handSet={handSet}')
+                        if tidSet&handSet!=tidSet: return False
+                        logger.debug(f'MountainRemaining={len(self._mountain)}')
+                        if len(self._mountain)<=0: return False
+                        logger.debug('All check passed.')
+                        self._buildSet(seatID, sorted(tids))
+                        self._drawTile(seatID)
+                        self._state = {'Main':'PlayerXHandleDraw', 'X':role, 'IsKanDraw':True}
+                        return True
+                    if actionType=='Kan2':
+                        tids = action.get('Value',None)
+                        logger.debug(f'tids={tids}')
+                        if not CheckQuad(tids): return False
+                        logger.debug(f'MountainRemaining={len(self._mountain)}')
+                        if len(self._mountain)<=0: return False
+                        handSet = set(self._oldHand[seatID]+self._newHand[seatID])
+                        logger.debug(f'handSet={handSet}')
+                        tidSet = set(tids)
+                        tidToAddToSet = None
+                        sid = None
+                        for idx,built in enumerate(self._builtSets[seatID]):
+                            logger.debug(f'builtTiles={built.getTiles()}')
+                            if not built.isTriplet(): continue
+                            builtTileSet = set(built.getTiles())
+                            if len(tidSet&handSet)==1 and len(tidSet&builtTileSet)==3:
+                                tidToAddToSet = (tidSet&handSet).pop()
+                                sid = idx
+                                break
+                        logger.debug(f'tidToAddToSet={tidToAddToSet}')
+                        logger.debug(f'sid={sid}')
+                        if sid==None: return False
+                        logger.debug('All checks passed.')
+                        self._removeTile(tidToAddToSet)
+                        self._builtSets[seatID][sid].addTile(tidToAddToSet)
+                        self._drawTile(seatID)
+                        self._state = {'Main':'PlayerXHandleDraw', 'X':role, 'IsKanDraw':True}
+                        return True
             elif mainState == 'PlayerXToRespondToDiscard':
                 if role==self._state.get('X',None):
                     seatID = self._getSeatIDByRole(role)
                     oppoRole = 1-role
                     oppoSeatID = self._getSeatIDByRole(oppoRole)
                     actionType = action.get('Type',None)
-                    if actionType=='Pass':
+                    if actionType=='Draw':
                         if len(self._mountain)>=1:
-                            self._drawTile(self._getSeatIDByRole(role))
+                            self._drawTile(seatID)
                             self._state = {'Main':'PlayerXHandleDraw','X':role}
                         else:
                             self._state = {'Main':'Finished'}
                         return True
                     elif actionType=='Pon':
-                        if len(self._oldHand[seatID])<2: return False
-                        if len(self._river[oppoSeatID])<1: return False
-                        if len(self._builtSets[seatID])>=4: return False
-                        tid0 = self._river[oppoSeatID][-1]
-                        tgid = tid0 // 4
-                        candidates = [tile for tile in self._oldHand[seatID] if tile//4==tgid]
-                        if len(candidates)<2: return False
-                        tid1 = candidates[0]
-                        tid2 = candidates[1]
-                        self._buildSet(seatID,[tid0,tid1,tid2])
+                        tids = action.get('Value', [])
+                        if not CheckTriplet(tids): return False
+                        tidSet = set(tids)
+                        lastDiscardedSet = set(self._river[oppoSeatID][-1:])
+                        oldHandSet = set(self._oldHand[seatID])
+                        logger.debug(f'tidSet={tidSet}')
+                        logger.debug(f'lastDiscardedSet={lastDiscardedSet}')
+                        logger.debug(f'oldHandSet={oldHandSet}')
+                        if len(tidSet&lastDiscardedSet)!=1: return False
+                        if len(tidSet&oldHandSet)!=2: return False
+                        #All checks pass.
+                        self._buildSet(seatID, sorted(tids))
                         self._state = {'Main':'PlayerXHandleDraw', 'X':role}
                         return True
                     elif actionType=='Chi':
-                        chiMode = action.get('ChiMode', None)
-                        if len(self._oldHand[seatID])<2: return False
-                        if len(self._river[oppoSeatID])<1: return False
-                        if len(self._builtSets[seatID])>=4: return False
-                        tid0 = self._river[oppoSeatID][-1]
-                        tgid = tid0 // 4
-                        if chiMode=='_YZ':
-                            if tgid in range(0,7) or tgid in range(9,16) or tgid in range(18,25):
-                                tiles_1 = [tid for tid in self._oldHand[seatID] if tid//4==tgid+1]
-                                tiles_2 = [tid for tid in self._oldHand[seatID] if tid//4==tgid+2]
-                                if len(tiles_1)==0 or len(tiles_2)==0: return False
-                                self._buildSet(seatID,[tid0,tiles_1[0],tiles_2[0]])
-                                self._state = {'Main':'PlayerXHandleDraw', 'X':role}
-                                return True
-                            else:
-                                return False
-                        elif chiMode=='X_Z':
-                            if tgid in range(1,8) or tgid in range(10,17) or tgid in range(19,26):
-                                tilesm1 = [tid for tid in self._oldHand[seatID] if tid//4==tgid-1]
-                                tilesp1 = [tid for tid in self._oldHand[seatID] if tid//4==tgid+1]
-                                if len(tilesm1)==0 or len(tilesp1)==0: return False
-                                self._buildSet(seatID,[tilesm1[0],tid0,tilesp1[0]])
-                                self._state = {'Main':'PlayerXHandleDraw', 'X':role}
-                                return True
-                            else:
-                                return False
-                        elif chiMode=='XY_':
-                            if tgid in range(2,9) or tgid in range(11,18) or tgid in range(20,27):
-                                tilesm1 = [tid for tid in self._oldHand[seatID] if tid//4==tgid-1]
-                                tilesm2 = [tid for tid in self._oldHand[seatID] if tid//4==tgid-2]
-                                if len(tilesm1)==0 or len(tilesm2)==0: return False
-                                self._buildSet(seatID,[tilesm2[0],tilesm1[0],tid0])
-                                self._state = {'Main':'PlayerXHandleDraw', 'X':role}
-                                return True
-                            else:
-                                return False
-                        else:
-                            return False
-                    elif actionType=='Win':
-                        if len(self._river[oppoSeatID])==0: return False
-                        tgids = [tid//4 for tid in (self._oldHand[seatID] + [self._river[oppoSeatID][-1]])]
-                        if not Check3Xn2(tgids): return False
+                        tids = action.get('Value', [])
+                        if not CheckSequence(tids): return False
+                        tidSet = set(tids)
+                        lastDiscardedSet = set(self._river[oppoSeatID][-1:])
+                        oldHandSet = set(self._oldHand[seatID])
+                        logger.debug(f'tidSet={tidSet}')
+                        logger.debug(f'lastDiscardedSet={lastDiscardedSet}')
+                        logger.debug(f'oldHandSet={oldHandSet}')
+                        if len(tidSet&lastDiscardedSet)!=1: return False
+                        if len(tidSet&oldHandSet)!=2: return False
+                        #All checks pass.
+                        self._buildSet(seatID, sorted(tids))
+                        self._state = {'Main':'PlayerXHandleDraw', 'X':role}
+                        return True
+                    elif actionType=='Ron':
+                        val = action.get('Value', [])
+                        logger.debug(f'RequestedDecomposition={val}')
+                        # Check if provided tiles matches what the player have in hand.
+                        expectedTileSet = set(self._oldHand[seatID]+self._river[oppoSeatID][-1:])
+                        actualTileSet = set(itertools.chain.from_iterable(val))
+                        logger.debug(f'expectedTileSet={expectedTileSet}')
+                        logger.debug(f'actualTileSet={actualTileSet}')
+                        if actualTileSet != expectedTileSet: return False
+                        # Check if the decomposition has 1 pair.
+                        pairs = [0 for grp in val if CheckPair(grp)]
+                        logger.debug(f'pairs={pairs}')
+                        if len(pairs) != 1: return False
+                        # Check if the decomposition has n-1 set.
+                        sets = [0 for grp in val if CheckTriplet(grp) or CheckSequence(grp)]
+                        logger.debug(f'sets={sets}')
+                        if len(sets) != len(val)-1: return False
+
                         self._state = {'Main':'PlayerXWon','X':role}
+                        return True
+                    elif actionType=='Kan1':
+                        tids = action.get('Value', [])
+                        if not CheckQuad(tids): return False
+                        tidSet = set(tids)
+                        lastDiscardedSet = set(self._river[oppoSeatID][-1:])
+                        oldHandSet = set(self._oldHand[seatID])
+                        logger.debug(f'tidSet={tidSet}')
+                        logger.debug(f'lastDiscardedSet={lastDiscardedSet}')
+                        logger.debug(f'oldHandSet={oldHandSet}')
+                        if len(tidSet&lastDiscardedSet)!=1: return False
+                        if len(tidSet&oldHandSet)!=3: return False
+                        logger.debug(f'MountainRemaining={len(self._mountain)}')
+                        if len(self._mountain)<=0: return False
+                        #All checks pass.
+                        self._buildSet(seatID, sorted(tids))
+                        self._drawTile(seatID)
+                        self._state = {'Main':'PlayerXHandleDraw', 'X':role, 'IsKanDraw':True}
                         return True
             return False
         finally:
@@ -275,16 +388,14 @@ class GameState:
             self._removeIfExist(self._river[seatID],tid)
     def _removeIfExist(self, lst, val):
         if val in lst: lst.remove(val)
-    def _discardFromHandToRiver(self, seatID, fromOldHand, idx):
+    def _discardFromHandToRiver(self, seatID, fromOldHand, tid):
         assert seatID in [0,1,2,3]
         if fromOldHand:
-            assert idx in range(len(self._oldHand[seatID]))
-            tid = self._oldHand[seatID][idx]
-            self._oldHand[seatID] = self._oldHand[seatID][:idx]+self._oldHand[seatID][idx+1:]
+            assert tid in self._oldHand[seatID]
+            self._oldHand[seatID].remove(tid)
         else:
-            assert idx in range(len(self._newHand[seatID]))
-            tid = self._newHand[seatID][idx]
-            self._newHand[seatID] = self._newHand[seatID][:idx]+self._newHand[seatID][idx+1:]
+            assert tid in self._newHand[seatID]
+            self._newHand[seatID].remove(tid)
         self._river[seatID].append(tid)
 
     def _organizeHand(self, seatID):
