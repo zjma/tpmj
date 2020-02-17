@@ -263,7 +263,6 @@ export function get3XSolutions(tgids, allowTgid0Triplet) {
 }
 
 export function get3Xn2Solutions(tgids) {
-    window.console.log((new Date()).getTime())
     if (tgids.length%3!=2) {
         return []
     }
@@ -284,25 +283,16 @@ export function get3Xn2Solutions(tgids) {
         }
     }
 
-    window.console.log((new Date()).getTime())
-    window.console.log(result)
     return result
 }
 
 function getTidSolution(tids, gtidsol) {
-    window.console.log('Startinig getTidSolution.')
-    window.console.log(tids)
-    window.console.log(gtidsol)
-
     var tg2tids = [...Array(34).keys()].map(() => ([]))
 
     for (const tid of tids) {
         var tgid = getTileGroupID(tid)
         tg2tids[tgid].push(tid)
     }
-
-    window.console.log('getTidSolution checkpoint 0')
-    window.console.log(tg2tids)
 
     var result = []
 
@@ -316,8 +306,6 @@ function getTidSolution(tids, gtidsol) {
         result.push(subresult)
     }
 
-    window.console.log('Finishing getTidSolution')
-    window.console.log(result)
     return result
 }
 
@@ -395,27 +383,35 @@ export function getChiActions(gameStateView, role) {
     var candp1s = oldTids.filter(tid => getTileGroupID(tid)==discardedTgid+1)
     var candp2s = oldTids.filter(tid => getTileGroupID(tid)==discardedTgid+2)
 
-    if (discardedTgid>=2 && discardedTgid<=8 || discardedTgid>=11 && discardedTgid<=17 || discardedTgid>=20 && discardedTgid<26 && candm2s.length>=1 && candm1s.length>=1) {
+    window.console.log('Chi analyzing.')
+    window.console.log(candm2s)
+    window.console.log(candm1s)
+    window.console.log(candp1s)
+    window.console.log(candp2s)
+
+    if ((discardedTgid>=2 && discardedTgid<=8 || discardedTgid>=11 && discardedTgid<=17 || discardedTgid>=20 && discardedTgid<26) && candm2s.length>=1 && candm1s.length>=1) {
         result.push({
             Type:'Chi',
             Value:[candm2s[0],candm1s[0],discardedTid],
         })
     }
 
-    if (discardedTgid>=1 && discardedTgid<=7 || discardedTgid>=10 && discardedTgid<=16 || discardedTgid>=19 && discardedTgid<25 && candm1s.length>=1 && candp1s.length>=1) {
+    if ((discardedTgid>=1 && discardedTgid<=7 || discardedTgid>=10 && discardedTgid<=16 || discardedTgid>=19 && discardedTgid<25) && candm1s.length>=1 && candp1s.length>=1) {
         result.push({
             Type:'Chi',
             Value:[candm1s[0],discardedTid,candp1s[0]],
         })
     }
 
-    if (discardedTgid>=0 && discardedTgid<=6 || discardedTgid>=9 && discardedTgid<=15 || discardedTgid>=18 && discardedTgid<24 && candp1s.length>=1 && candp2s.length>=1) {
+    if ((discardedTgid>=0 && discardedTgid<=6 || discardedTgid>=9 && discardedTgid<=15 || discardedTgid>=18 && discardedTgid<24) && candp1s.length>=1 && candp2s.length>=1) {
         result.push({
             Type:'Chi',
             Value:[discardedTid,candp1s[0],candp2s[0]],
         })
     }
 
+    window.console.log('Chi analyzed.')
+    window.console.log(result)
     return result
 }
 

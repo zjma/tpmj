@@ -39,18 +39,21 @@ class Host:
 			self._waitingPlayers.append(playerName)
 		if len(self._waitingPlayers)>=2:
 			gid = uuid4().hex
-			self._gidToGameStateMap[gid] = GameState()
 			random.shuffle(self._waitingPlayers)
+			player0 = self._waitingPlayers[0]
+			player1 = self._waitingPlayers[1]
+			self._gidToGameStateMap[gid] = GameState(player0, player1)
 			logger.info(f'New game: {self._waitingPlayers[0]} vs {self._waitingPlayers[1]}')
-			self._playerToGidAndRoleMap[self._waitingPlayers[0]] = (gid,0)
-			self._playerToGidAndRoleMap[self._waitingPlayers[1]] = (gid,1)
+			self._playerToGidAndRoleMap[player0] = (gid,0)
+			self._playerToGidAndRoleMap[player1] = (gid,1)
 			self._waitingPlayers = self._waitingPlayers[2:]
 		return {'Accepted':True}
 
 	def getGameState(self, request):
 		gid = request.get('GameID', None)
 		role = request.get('RoleID', None)
-		gameState = self._gidToGameStateMap[gid] if gid in self._gidToGameStateMap else self._gidToGameStateMap.setdefault(gid, GameState())
+		if gid not in self._gidToGameStateMap: return {'Accepted':False}
+		gameState = self._gidToGameStateMap[gid]
 		result = gameState.getStateView(role)
 		if gameState.finished():
 			for player in self._getPlayersByGameID(gid):

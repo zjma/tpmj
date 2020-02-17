@@ -36,7 +36,7 @@ export default {
         return {
             UserName            : 'NoName',
             mode                : 'Play',
-            State               : undefined,//'UserLoggingIn',
+            State               : 'UserLoggingIn',
             MySeat              : 0,
             gameStateView       : Game2Util.randGameStateView(),
             counter             : 0,
@@ -150,14 +150,11 @@ export default {
         onUserAction(action){
             window.console.log("User action!")
             window.console.log(action)
-            if (action.Area != 'Self') {
-                return
-            }
             axios.post(process.env.VUE_APP_API_SERVER_URL, {
                 Action:'PerformGameAction',
                 GameID:this.GameID,
                 RoleID: this.MyRole,
-                Payload:Game2Util.getActionPayload(action.Action),
+                Payload:action,
             })
         }
     },

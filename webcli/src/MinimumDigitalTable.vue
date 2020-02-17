@@ -12,24 +12,24 @@
                                     </div>
                                 </v-card-title>
                                 <v-card-text>
-                                    Miku
+                                    {{OppoName}}
                                 </v-card-text>
                             </v-card>
                         </v-col>
                         <v-col>
                             <div class='RiverRow'>
-                                🀟🀟🀟🀟🀟🀟🀟🀟🀟🀟🀟🀟🀟🀟🀟🀟🀟🀟🀟🀟🀟🀟🀟🀟
+                                {{OppoRiver}}
                             </div>
                         </v-col>
                     </v-row>
                     <div class='Hand'>
-                        🀟🀟🀟🀟🀟🀟🀟🀟🀟🀟🀟🀟🀟 🀟
+                        {{OppoHand}}
                     </div>
                     <v-row>
-                        <v-col>🀟🀟🀟🀟</v-col>
-                        <v-col>🀟🀟🀟🀟</v-col>
-                        <v-col>🀟🀟🀟🀟</v-col>
-                        <v-col>🀟🀟🀟🀟</v-col>
+                        <v-col>{{OppoSet3}}</v-col>
+                        <v-col>{{OppoSet2}}</v-col>
+                        <v-col>{{OppoSet1}}</v-col>
+                        <v-col>{{OppoSet0}}</v-col>
                     </v-row>
                 </div>
                 <v-card>
@@ -68,14 +68,12 @@
             </v-col>
             <v-col md='6' cols='12' class='PlayerActions'>
                 <v-list two-line>
-                    <v-list-item-group v-for='(action,idx) in ActionUiData' :key='idx'>
-                        <v-list-item @click="onAction('yo')">
-                            <v-list-item-content>
-                                <v-list-item-title style="font-size: 1em;">{{action.Value}}</v-list-item-title>
-                                <v-list-item-subtitle>{{action.Type}}</v-list-item-subtitle>
-                            </v-list-item-content>
-                        </v-list-item>
-                    </v-list-item-group>
+                    <v-list-item v-for='(action,idx) in ActionUiData' :key='idx' @click="onAction(action.Data)">
+                        <v-list-item-content>
+                            <v-list-item-title style="font-size: 1em;">{{action.Value}}</v-list-item-title>
+                            <v-list-item-subtitle>{{action.Type}}</v-list-item-subtitle>
+                        </v-list-item-content>
+                    </v-list-item>
                 </v-list>
             </v-col>
         </v-row>
@@ -113,12 +111,23 @@ export default {
         SelfName: function(){
             return this.gameStateView.PlayerNames[this.myRole]
         },
+        OppoName: function(){
+            return this.gameStateView.PlayerNames[1-this.myRole]
+        },
         SelfRiver: function(){
             return this.gameStateView.AreaViews[this.mySeat].River.map(v => styling.getTileViewChar(v)).join('')
+        },
+        OppoRiver: function(){
+            return this.gameStateView.AreaViews[this.oppoSeat].River.map(v => styling.getTileViewChar(v)).join('')
         },
         SelfHand: function(){
             var oldHandStr = this.gameStateView.AreaViews[this.mySeat].OldHand.map(v => styling.getTileViewChar(v)).join('')
             var newHandStr = this.gameStateView.AreaViews[this.mySeat].NewHand.map(v => styling.getTileViewChar(v)).join('')
+            return oldHandStr+' '+newHandStr
+        },
+        OppoHand: function(){
+            var oldHandStr = this.gameStateView.AreaViews[this.oppoSeat].OldHand.map(v => styling.getTileViewChar(v)).join('')
+            var newHandStr = this.gameStateView.AreaViews[this.oppoSeat].NewHand.map(v => styling.getTileViewChar(v)).join('')
             return oldHandStr+' '+newHandStr
         },
         SelfSet0: function(){
@@ -137,6 +146,22 @@ export default {
             var set = this.gameStateView.AreaViews[this.mySeat].BuiltSets[3]
             return (set) ? set.TileViews.map(v => styling.getTileViewChar(v)).join('') : undefined
         },
+        OppoSet0: function(){
+            var set = this.gameStateView.AreaViews[this.oppoSeat].BuiltSets[0]
+            return (set) ? set.TileViews.map(v => styling.getTileViewChar(v)).join('') : undefined
+        },
+        OppoSet1: function(){
+            var set = this.gameStateView.AreaViews[this.oppoSeat].BuiltSets[1]
+            return (set) ? set.TileViews.map(v => styling.getTileViewChar(v)).join('') : undefined
+        },
+        OppoSet2: function(){
+            var set = this.gameStateView.AreaViews[this.oppoSeat].BuiltSets[2]
+            return (set) ? set.TileViews.map(v => styling.getTileViewChar(v)).join('') : undefined
+        },
+        OppoSet3: function(){
+            var set = this.gameStateView.AreaViews[this.oppoSeat].BuiltSets[3]
+            return (set) ? set.TileViews.map(v => styling.getTileViewChar(v)).join('') : undefined
+        },
         ActionUiData: function(){
             var actions = Game2Utils.getAction(this.gameStateView, this.myRole)
             return actions.map(a => styling.getActionUIData(a))
@@ -144,8 +169,9 @@ export default {
 
     },
     methods: {
-        onAction: function(){
-            window.console.log('kaykay')
+        onAction: function(actionData){
+            window.console.log(actionData)
+            this.$emit('UserAction',actionData)
         },
         onSelfAction: function(action){
             window.console.log('Self action!')
