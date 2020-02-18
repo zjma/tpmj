@@ -1,4 +1,6 @@
 var assert = require('assert');
+import * as Game2Utils from '../src/game2.js';
+
 describe('Array', function() {
   describe('#indexOf()', function() {
     it('should return -1 when the value is not present', function() {
@@ -6,3 +8,9 @@ describe('Array', function() {
     });
   });
 });
+
+describe('Game2Utils', function(){
+    it('should return 1 when the area is Oppo', function(){
+        assert.equal(Game2Utils.getRoleFromArea('Oppo'), 1);
+    })
+})
