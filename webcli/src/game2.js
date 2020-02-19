@@ -145,67 +145,6 @@ export function randGameStateView() {
     return obj
 }
 
-export function getRoleFromArea(area) {
-    switch (area) {
-        case 'Self': return 0
-        case 'Oppo': return 1
-        default: return undefined
-    }
-}
-
-export function getActionPayload(userAction) {
-    switch (userAction.Type) {
-        case 'OldHandClick':
-            return {
-                Type : 'DiscardFromHand',
-                'FromOldHand': true,
-                'Index': userAction.Idx,
-            }
-        case 'NewHandClick':
-            return {
-                Type : 'DiscardFromHand',
-                'FromOldHand': false,
-                'Index': userAction.Idx,
-            }
-        case 'SetClick':
-            return {
-                Type : 'Kan2',
-            }
-        case 'PassClick':
-            return {
-                Type : 'Pass',
-            }
-        case 'PonClick':
-            return {
-                Type : 'Pon',
-            }
-        case 'WinClick':
-            return {
-                Type : 'Win',
-            }
-        case 'Chi0Click':
-            return {
-                Type : 'Chi',
-                ChiMode : '_YZ',
-            }
-        case 'Chi1Click':
-            return {
-                Type : 'Chi',
-                ChiMode : 'X_Z',
-            }
-        case 'Chi2Click':
-            return {
-                Type : 'Chi',
-                ChiMode : 'XY_',
-            }
-        case 'KanOptionClick':
-            return {
-                Type : 'Kan',
-                Value: userAction.KanOption,
-            }
-    }
-}
-
 export function getRoleBySeatID(seatID) {
     return (seatID == 0) ? 0 : (seatID == 2) ? 1 : undefined
 }
@@ -230,7 +169,7 @@ var minfinder = function(accumulated, toProcess){
     return Math.min(accumulated, toProcess)
 }
 
-export function get3XSolutions(tgids, allowTgid0Triplet) {
+function get3XSolutions(tgids, allowTgid0Triplet) {
     if (tgids.length==0) return [[]]
     if (tgids.length%3!=0) return []
 
