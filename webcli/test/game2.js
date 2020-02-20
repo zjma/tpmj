@@ -82,6 +82,8 @@ describe('Game2Utils', function(){
                 [[31,31,31],[32,32,32],[33,33,33],[30,30]],
             ])
         })
-
+        it('should fail', ()=>{
+            expect('asb').to.be.an('Array')
+        })
     })
 })
