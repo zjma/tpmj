@@ -1,3 +1,20 @@
-language: python
-script:
-  - pytest
+matrix:
+  include:
+    - language: python
+      python:
+        - "3.7"
+      before_install:
+        - cd backend
+      install:
+        - pip install -r requirements.txt
+      script:
+        - pytest
+    - language: node_js
+      node_js:
+        - 12
+      before_install:
+        - cd webcli
+      install:
+        - npm install
+      script:
+        - npm test
