@@ -11,11 +11,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-    - name: Run a one-line script
-      run: pwd
-    - name: Run another one-line script
-      run: ls
-    - name: Run a multi-line script
+    - name: Update ./Version
       run: |
-        echo Add other actions to build,
-        echo test, and deploy your project.
+        OldVersion=`cat Version`
+        major=`cat Version | awk -F. '{print $1}'`
+        minor=`cat Version | awk -F. '{print $2}'`
+        patch=`cat Version | awk -F. '{print $3}'`
+        let minor=minor+1
+        NewVersion=$major.$minor.$patch
+        echo $NewVersion > Version
+        git add .
+        git commit -m "Bump version from $OldVersion to $NewVersion." --author="GitHub Action <action@github.com>"
+    - name: Push changes
+      uses: ad-m/github-push-action@master
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        branch: master
