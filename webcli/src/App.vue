@@ -1,5 +1,6 @@
 <template>
     <v-app>
+        <div class='Version'>WebCliVersion={{WebCliVersion}}</div>
         <login-dialog :active="IsLoginDialogActive" :default-user-name="UserName" @finished="onLoginFinished" />
         <mode-dialog :active="IsModeDialogActive" :default-mode="mode" @play-selected="onPlayModeSelected" @observe-selected="onObserveModeSelected" @cancelled="onModeSelectionCancelled" />
         <player-waiting-dialog :active="IsPlayerWaitingDialogActive" @cancelled="onPlayerWaitingCancelled" @selected="onPlayerGameSelected"/>
@@ -44,6 +45,7 @@ export default {
             MyRole              : 0,
             PlayerWaitingQueryPending : false,
             PlayingQueryPending: false,
+            WebCliVersion       : process.env.VUE_APP_WEBCLI_VERSION,
         }
     },
 
@@ -160,3 +162,11 @@ export default {
     },
 };
 </script>
+
+<style>
+.Version {
+    font-family: monospace;
+    text-align: right;
+    font-size: 1em;
+}
+</style>

@@ -12,9 +12,6 @@ router.use(function (req,res,next) {
 
 app.use('/2pmj', express.static(path));
 app.use('/', router);
-app.get('/settings', function(req, res){
-    res.json({hosturl:"http://localhost:8080/tpmj"});
-});
 app.listen(port, function () {
   console.log('Example app listening on port 80!')
 })
