@@ -1,6 +1,6 @@
 <template>
     <v-app>
-        <div class='Version'>WebCliVersion={{WebCliVersion}}</div>
+        <div class='Version'>WebCliVersion={{WebCliVersion}}, ApiServerVersion={{ApiServerVersion}}</div>
         <login-dialog :active="IsLoginDialogActive" :default-user-name="UserName" @finished="onLoginFinished" />
         <mode-dialog :active="IsModeDialogActive" :default-mode="mode" @play-selected="onPlayModeSelected" @observe-selected="onObserveModeSelected" @cancelled="onModeSelectionCancelled" />
         <player-waiting-dialog :active="IsPlayerWaitingDialogActive" @cancelled="onPlayerWaitingCancelled" @selected="onPlayerGameSelected"/>
@@ -46,15 +46,40 @@ export default {
             PlayerWaitingQueryPending : false,
             PlayingQueryPending: false,
             WebCliVersion       : process.env.VUE_APP_WEBCLI_VERSION,
+            ApiServerVersion    : 'Connecting...',
+            ApiServerAboutUrl   : `${process.env.VUE_APP_API_SERVER_URL}/about`,
+            ApiServerPlayUrl    : `${process.env.VUE_APP_API_SERVER_URL}/tpmj`,
+            AboutQueryPending   : false,
         }
     },
 
     mounted: function() {
         const self = this
+
+        //'Thread' for polling api server.
+        setInterval(function(){
+            if (!self.AboutQueryPending) {
+                self.AboutQueryPending = true
+                axios.get(self.ApiServerAboutUrl).then(response => {
+                    self.AboutQueryPending = false
+                    var sub = response.data
+                    if (sub.Version) {
+                        self.ApiServerVersion = sub.Version
+                    } else {
+                        self.ApiServerVersion = 'Connecting...'
+                    }
+                }).catch(function(error){
+                    self.AboutQueryPending = false
+                    window.console.log(error)
+                    self.ApiServerVersion = 'Connecting...'
+                })
+            }
+        }, 2000)
+
         setInterval(function(){
             if (self.State == 'Playing' && !self.PlayingQueryPending) {
                 self.PlayingQueryPending = true
-                axios.post(process.env.VUE_APP_API_SERVER_URL, {
+                axios.post(self.ApiServerPlayUrl, {
                     Action:'GetGameState',
                     GameID:self.GameID,
                     RoleID:self.MyRole,
@@ -78,7 +103,7 @@ export default {
         setInterval(function(){
             if (self.State == 'PlayerWaitingForGame' && !self.PlayerWaitingQueryPending) {
                 self.PlayerWaitingQueryPending = true
-                axios.post(process.env.VUE_APP_API_SERVER_URL, {
+                axios.post(self.ApiServerPlayUrl, {
                     Action:'RequestMatch',
                     PlayerName:self.UserName,
                 }).then(response => {
@@ -152,7 +177,7 @@ export default {
         onUserAction(action){
             window.console.log("User action!")
             window.console.log(action)
-            axios.post(process.env.VUE_APP_API_SERVER_URL, {
+            axios.post(self.ApiServerPlayUrl, {
                 Action:'PerformGameAction',
                 GameID:this.GameID,
                 RoleID: this.MyRole,
