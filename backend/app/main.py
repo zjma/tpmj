@@ -5,13 +5,18 @@ from flask import Flask,request,jsonify
 from flask_cors import CORS
 from Host import Host
 
-with open(str(pathlib.Path(__file__).parent.parent.parent.joinpath('Version'))) as f:
+VersionFilePath = str(pathlib.Path(__file__).absolute().parent.parent.parent.joinpath('Version'))
+
+with open(VersionFilePath) as f:
     Version = f.read().strip()
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 logging.getLogger('werkzeug').setLevel(logging.ERROR)
+
+logger.info(f'Version={Version}')
+
 app = Flask(__name__)
 CORS(app)
 host = Host()
