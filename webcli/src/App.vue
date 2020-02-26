@@ -34,7 +34,7 @@ export default {
         'minimum-digital-table'     : MinimumDigitalTable,
     },
     data: function() {
-        return {
+        var result = {
             UserName            : 'NoName',
             mode                : 'Play',
             State               : 'UserLoggingIn',
@@ -50,7 +50,9 @@ export default {
             ApiServerAboutUrl   : `${process.env.VUE_APP_API_SERVER_URL}/about`,
             ApiServerPlayUrl    : `${process.env.VUE_APP_API_SERVER_URL}/tpmj`,
             AboutQueryPending   : false,
-        }
+        };
+
+        return result;
     },
 
     mounted: function() {
@@ -177,7 +179,7 @@ export default {
         onUserAction(action){
             window.console.log("User action!")
             window.console.log(action)
-            axios.post(self.ApiServerPlayUrl, {
+            axios.post(this.ApiServerPlayUrl, {
                 Action:'PerformGameAction',
                 GameID:this.GameID,
                 RoleID: this.MyRole,
