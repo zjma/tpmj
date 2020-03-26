@@ -25,6 +25,12 @@ export function getTileViewChar(tileView) {
     }
 }
 
+export function getHandStr(gameStateView, seatID) {
+    var oldHandStr = gameStateView.AreaViews[seatID].OldHand.map(v => getTileViewChar(v)).join('')
+    var newHandStr = gameStateView.AreaViews[seatID].NewHand.map(v => getTileViewChar(v)).join('')
+    return oldHandStr+' '+newHandStr
+}
+
 export function getActionUIData(action) {
     switch (action.Type) {
         case 'Draw':

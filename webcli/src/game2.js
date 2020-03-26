@@ -87,21 +87,11 @@ export function randAreaData() {
             {IsValueVisible : true, Value : 133,},
         ],
         Mountain    : getRandomMountain(),
-        // OldHand     : getRandomTileViewList((4-setCount)*3+1),
-        // NewHand     : getRandomTileViewList(1),
         OldHand     : [
-            {IsValueVisible : true, Value : 3,},
-            {IsValueVisible : true, Value : 5,},
-            {IsValueVisible : true, Value : 6,},
-            {IsValueVisible : true, Value : 7,},
-            {IsValueVisible : true, Value : 9,},
-            {IsValueVisible : true, Value : 10,},
-            {IsValueVisible : true, Value : 11,},
-            {IsValueVisible : true, Value : 12,},
-            {IsValueVisible : true, Value : 13,},
-            {IsValueVisible : true, Value : 132,},
+            {IsValueVisible : true, Value : 34},
         ],
         NewHand     : [
+            {IsValueVisible : true, Value : 35},
         ],
         // BuiltSets   : [...Array(setCount).keys()].map(getRandomSet),
         BuiltSets   : [
@@ -110,13 +100,31 @@ export function randAreaData() {
                     {IsValueVisible : true, Value : 0,},
                     {IsValueVisible : true, Value : 1,},
                     {IsValueVisible : true, Value : 2,},
+                    {IsValueVisible : true, Value : 3,},
                 ],
             },
             {
                 'TileViews': [
-                    {IsValueVisible : true, Value : 132,},
-                    {IsValueVisible : true, Value : 134,},
-                    {IsValueVisible : true, Value : 135,},
+                    {IsValueVisible : true, Value : 20,},
+                    {IsValueVisible : true, Value : 21,},
+                    {IsValueVisible : true, Value : 22,},
+                    {IsValueVisible : true, Value : 23,},
+                ],
+            },
+            {
+                'TileViews': [
+                    {IsValueVisible : true, Value : 40,},
+                    {IsValueVisible : true, Value : 41,},
+                    {IsValueVisible : true, Value : 42,},
+                    {IsValueVisible : true, Value : 43,},
+                ],
+            },
+            {
+                'TileViews': [
+                    {IsValueVisible : true, Value : 60,},
+                    {IsValueVisible : true, Value : 61,},
+                    {IsValueVisible : true, Value : 62,},
+                    {IsValueVisible : true, Value : 63,},
                 ],
             },
         ],
@@ -133,8 +141,19 @@ export function randGameStateView() {
             randAreaData(),
         ],
         State : {
-            Main: 'PlayerXToRespondToDiscard',
+            Main: 'PlayerXWin',
             X: 0,
+            WinningTileFromPlayer: 0,
+            WinningPatterns: [
+                {
+                    Name:'清一色',
+                    Value:2,
+                },
+                {
+                    Name:'不求人',
+                    Value:1,
+                },
+            ],
         },
         PlayerNames : [
             'Player0',
@@ -142,7 +161,7 @@ export function randGameStateView() {
         ],
     }
 
-    return obj
+    return obj;
 }
 
 export function getRoleBySeatID(seatID) {

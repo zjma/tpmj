@@ -6,6 +6,7 @@
         <player-waiting-dialog :active="IsPlayerWaitingDialogActive" @cancelled="onPlayerWaitingCancelled" @selected="onPlayerGameSelected"/>
         <observer-waiting-dialog :active="IsObserverWaitingDialogActive" @cancelled="onObserverWaitingCancelled" @selected="onObservedGameSelected"/>
         <minimum-digital-table :gameStateView="gameStateView" :myRole="MyRole" @UserAction="onUserAction"/>
+        <result-dialog :active="IsResultDialogActive" :gameStateView="gameStateView" @finished="onGameResultConfirmed"/>
     </v-app>
 </template>
 
@@ -22,6 +23,7 @@ import ModeDialog from './ModeDialog.vue'
 import ObserverWaitingDialog from './ObserverWaitingDialog.vue'
 import PlayerWaitingDialog from './PlayerWaitingDialog.vue'
 import MinimumDigitalTable from './MinimumDigitalTable.vue'
+import GameResultDialog from './GameResultDialog.vue'
 
 export default {
     name: 'App',
@@ -32,12 +34,14 @@ export default {
         'observer-waiting-dialog'   : ObserverWaitingDialog,
         'player-waiting-dialog'     : PlayerWaitingDialog,
         'minimum-digital-table'     : MinimumDigitalTable,
+        'result-dialog'             : GameResultDialog,
     },
     data: function() {
         var result = {
             UserName            : 'NoName',
             mode                : 'Play',
-            State               : 'UserLoggingIn',
+            // State               : 'UserLoggingIn',
+            State               : 'GameFinished',
             MySeat              : 0,
             gameStateView       : Game2Util.randGameStateView(),
             counter             : 0,
@@ -92,7 +96,7 @@ export default {
                         self.gameStateView = sub
                         if (sub.State.Main == 'PlayerXWon' || sub.State.Main == 'Finished') {
                             window.console.log(sub.State)
-                            self.State = 'UserSelectingMode'
+                            self.State = 'GameFinished'
                         }
                     }
                 }).catch(function(error){
@@ -144,6 +148,9 @@ export default {
         IsPlayerWaitingDialogActive: function(){
             return this.State == 'PlayerWaitingForGame'
         },
+        IsResultDialogActive: function(){
+            return this.State == 'GameFinished'
+        },
     },
     methods: {
         onPlayModeSelected : function(){
@@ -185,6 +192,10 @@ export default {
                 RoleID: this.MyRole,
                 Payload:action,
             })
+        },
+        onGameResultConfirmed(){
+            window.console.log("Game result confirmed.");
+            this.State = 'UserSelectingMode';
         }
     },
 };

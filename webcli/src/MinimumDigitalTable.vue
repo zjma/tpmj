@@ -121,9 +121,7 @@ export default {
             return this.gameStateView.AreaViews[this.oppoSeat].River.map(v => styling.getTileViewChar(v)).join('')
         },
         SelfHand: function(){
-            var oldHandStr = this.gameStateView.AreaViews[this.mySeat].OldHand.map(v => styling.getTileViewChar(v)).join('')
-            var newHandStr = this.gameStateView.AreaViews[this.mySeat].NewHand.map(v => styling.getTileViewChar(v)).join('')
-            return oldHandStr+' '+newHandStr
+            return styling.getHandStr(this.gameStateView, this.mySeat);
         },
         OppoHand: function(){
             var oldHandStr = this.gameStateView.AreaViews[this.oppoSeat].OldHand.map(v => styling.getTileViewChar(v)).join('')
