@@ -13,6 +13,7 @@ function getTidListStr(tids) {
 export function getSeatChar(seat){
     return SeatChars[seat]
 }
+
 export function getTileViewChar(tileView) {
     if (tileView) {
         if (tileView.IsValueVisible) {
@@ -25,10 +26,48 @@ export function getTileViewChar(tileView) {
     }
 }
 
+export function getTileViewListStr(tileViews) {
+    return tileViews.map(tv => getTileViewChar(tv)).join('');
+}
+
 export function getHandStr(gameStateView, seatID) {
-    var oldHandStr = gameStateView.AreaViews[seatID].OldHand.map(v => getTileViewChar(v)).join('')
-    var newHandStr = gameStateView.AreaViews[seatID].NewHand.map(v => getTileViewChar(v)).join('')
-    return oldHandStr+' '+newHandStr
+    var oldHandStr = getTileViewListStr(gameStateView.AreaViews[seatID].OldHand);
+    var newHandStr = getTileViewListStr(gameStateView.AreaViews[seatID].NewHand);
+    return oldHandStr+' '+newHandStr;
+}
+
+export function getSetRowStr(gameStateView, seatID) {
+    var setStrs = gameStateView.AreaViews[seatID].BuiltSets.map(bsv => getTileViewListStr(bsv.TileViews));
+    return setStrs.join(' ');
+}
+
+export function getPatternValueStr(val) {
+    return `${val}番`;
+}
+
+export function getPatternUIData(pattern) {
+    var result = {};
+    result.DisplayValue = getPatternValueStr(pattern.Value);
+
+    switch (pattern.Name) {
+        case 'RedDragonTriplet':
+            result.DisplayName = '役牌·中';
+            break;
+        case 'GreenDragonTriplet':
+            result.DisplayName = '役牌·发';
+            break;
+        case 'WhiteDragonTriplet':
+            result.DisplayName = '役牌·白';
+            break;
+        case 'OneQuad':
+            result.DisplayName = '单杠';
+            break;
+        default:
+            result.DisplayName = '???';
+            break;
+    }
+
+    return result;
 }
 
 export function getActionUIData(action) {

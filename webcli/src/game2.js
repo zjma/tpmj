@@ -141,23 +141,29 @@ export function randGameStateView() {
             randAreaData(),
         ],
         State : {
-            Main: 'PlayerXWin',
+            Main: 'PlayerXWon',
             X: 0,
             WinningTileFromPlayer: 0,
-            WinningPatterns: [
-                {
-                    Name:'清一色',
-                    Value:2,
-                },
-                {
-                    Name:'不求人',
-                    Value:1,
-                },
-            ],
         },
         PlayerNames : [
             'Player0',
             'Player11111111111111111111111111111111111',
+        ],
+        PatternValues : {
+            OneQuad : 1,
+            WhiteDragonTriplet : 1,
+            GreenDragonTriplet : 1,
+            RedDragonTriplet : 1,
+        },
+        MatchedPatterns: [
+            [
+                'RedDragonTriplet',
+                'OneQuad',
+                'GreenDragonTriplet',
+            ],
+            [],
+            [],
+            [],
         ],
     }
 
@@ -485,4 +491,15 @@ export function getAction(gameStateView, role) {
     }
 
     return []
+}
+
+export function getTotalPatternValue(gameStateView, seatID) {
+    var result = 0;
+
+    for (var pattern of gameStateView.MatchedPatterns[seatID]) {
+        window.console.log(`Pattern=${pattern}`);
+        result += gameStateView.PatternValues[pattern];
+    }
+
+    return result;
 }

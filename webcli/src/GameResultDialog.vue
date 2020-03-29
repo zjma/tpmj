@@ -6,10 +6,10 @@
             </v-card-title>
             <v-container>
                 <v-row class="pl-10 pr-10 ResultHandShow">{{WinnderHand}}</v-row>
-                <v-row class="pl-10 pr-10 pb-5 ResultSetShow">🀐🀐🀐🀐 🀆🀆🀆🀆 🀔🀔🀔🀔 🀀🀀🀀🀀</v-row>
-                <v-row><v-col class="PatternName">清一色</v-col><v-col class="PatternValue">2番</v-col></v-row>
+                <v-row class="pl-10 pr-10 pb-5 ResultSetShow">{{WinnerSetRow}}</v-row>
+                <v-row v-for='(pattern,idx) in PatternUIData' :key='idx'><v-col class="PatternName">{{pattern.DisplayName}}</v-col><v-col class="PatternValue">{{pattern.DisplayValue}}</v-col></v-row>
                 <v-divider class="ma-4"/>
-                <v-row class="TotalValue">9番</v-row>
+                <v-row class="TotalValue">{{WinnerTotalValue}}</v-row>
             </v-container>
             <v-card-actions>
                 <v-spacer></v-spacer>
@@ -33,7 +33,7 @@ export default {
         ResultTitle : function() {
             var gsv = this.gameStateView;
             switch (gsv.State.Main) {
-                case 'PlayerXWin':
+                case 'PlayerXWon':
                     var roleID = gsv.State.X;
                     var action = (gsv.State.WinningTileFromPlayer == roleID) ? "Tsumo" : "Ron";
                     var result = `${gsv.PlayerNames[roleID]} ${action}`;
@@ -43,11 +43,31 @@ export default {
             }
         },
         WinnderHand : function() {
-                var gsv = this.gameStateView;
-                var roleID = gsv.State.X;
-                var seatID = Game2Utils.getSeatByRole(roleID);
-                return styling.getHandStr(gsv, seatID);
+            var gsv = this.gameStateView;
+            var roleID = gsv.State.X;
+            var seatID = Game2Utils.getSeatByRole(roleID);
+            return styling.getHandStr(gsv, seatID);
         },
+        WinnerSetRow : function() {
+            var gsv = this.gameStateView;
+            var roleID = gsv.State.X;
+            var seatID = Game2Utils.getSeatByRole(roleID);
+            return styling.getSetRowStr(gsv, seatID);
+        },
+        PatternUIData : function() {
+            var gsv = this.gameStateView;
+            var roleID = gsv.State.X;
+            var seatID = Game2Utils.getSeatByRole(roleID);
+            return this.gameStateView.MatchedPatterns[seatID].map(pat => styling.getPatternUIData({Name:pat,Value:gsv.PatternValues[pat]}));
+        },
+        WinnerTotalValue : function() {
+            var gsv = this.gameStateView;
+            var roleID = gsv.State.X;
+            var seatID = Game2Utils.getSeatByRole(roleID);
+            var total = Game2Utils.getTotalPatternValue(gsv, seatID);
+            window.console.log(`totalFan=${total}`)
+            return styling.getPatternValueStr(total);
+        }
     },
     methods: {
         onNext : function(){

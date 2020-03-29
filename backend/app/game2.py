@@ -41,32 +41,70 @@ def Check3Xn2(tgids):
             if Check3X(tmpTgids): return True
     return False
 
-def CheckTriplet(tids):
+def CheckTriplet(tids, **kwargs):
+    '''Check if the given tiles form a triplet.
+    If ReturnTGID=True is given, return TileGroupID or None instead of boolean.
+    '''
     if type(tids)!=list: return False
     if len(tids)!=3: return False
     if len(set(tids))!=3: return False
     tgids = [tid // 4 for tid in tids]
+
+    if kwargs.get('ReturnTGID', False):
+        if tgids[0]==tgids[1] and tgids[0]==tgids[2]:
+            return tgids[0]
+        else:
+            return None
+
     return tgids[0]==tgids[1] and tgids[0]==tgids[2]
 
-def CheckSequence(tids):
+def CheckSequence(tids, **kwargs):
+    '''Check if the given tiles form a sequence.
+    If ReturnTGID=True is given, return TileGroupID or None instead of boolean.
+    '''
     if type(tids)!=list: return False
     if len(tids)!=3: return False
     tids = sorted(tids)
     tgids = [tid // 4 for tid in tids]
+    if kwargs.get('ReturnTGID', False):
+        if tgids[0]+1==tgids[1] and tgids[1]+1==tgids[2] and (tgids[0] in range(0,7) or tgids[0] in range(9,16) or tgids[0] in range(18,25)):
+            return sorted(tgids)[0]
+        else:
+            return None
     return tgids[0]+1==tgids[1] and tgids[1]+1==tgids[2] and (tgids[0] in range(0,7) or tgids[0] in range(9,16) or tgids[0] in range(18,25))
 
-def CheckQuad(tids):
+def CheckQuad(tids, **kwargs):
+    '''Check if the given tiles form a quad.
+    If ReturnTGID=True is given, return TileGroupID or None instead of boolean.
+    '''
     if type(tids)!=list: return False
     if len(tids)!=4: return False
     if len(set(tids))!=4: return False
     tgids = [tid // 4 for tid in tids]
+
+    if kwargs.get('ReturnTGID', False):
+        if tgids[0]==tgids[1] and tgids[0]==tgids[2] and tgids[0]==tgids[3]:
+            return tgids[0]
+        else:
+            return None
+
     return tgids[0]==tgids[1] and tgids[0]==tgids[2] and tgids[0]==tgids[3]
 
-def CheckPair(tids):
+def CheckPair(tids, **kwargs):
+    '''Check if the given tiles form a pair.
+    If ReturnTGID=True is given, return TileGroupID or None instead of boolean.
+    '''
     if type(tids)!=list: return False
     if len(tids)!=2: return False
     if len(set(tids))!=2: return False
     tgids = [tid // 4 for tid in tids]
+
+    if kwargs.get('ReturnTGID', False):
+        if tgids[0]==tgids[1]:
+            return tgids[0]
+        else:
+            return None
+
     return tgids[0]==tgids[1]
 
 def getWinRequestTileSet(req):
@@ -90,6 +128,9 @@ class Mountain:
         j0 = random.randint(0,37)
         self._forwardCursor = (i0,j0)
         self._backwordCursor = self._prevCursor(i0,j0)
+    @property
+    def tiles(self):
+        return self._tiles
     def _ensureForwardCursorValid(self):
         attemptCount=0
         while attemptCount<999:
@@ -130,7 +171,6 @@ class Mountain:
     def _prevCursor(self, i, j):
         if j==0: return (i+1)%4,37
         return i,j-1
-
 class Set:
     def __init__(self, tiles):
         self._tiles = sorted(tiles)
@@ -145,8 +185,17 @@ class Set:
     def isSequence(self): return CheckSequence(self._tiles)
     def isQuad(self): return CheckQuad(self._tiles)
     def getTiles(self): return self._tiles
+    @property
+    def tiles(self): return self._tiles
 class GameState:
     def __init__(self, player0, player1):
+        self._PatternValues = {
+            'OneQuad':1,
+            'RedDragonTriplet':1,
+            'GreenDragonTriplet':1,
+            'WhiteDragonTriplet':1,
+        }
+
         self._playerNames = [player0, player1]
         self._river = [
             [],
@@ -157,6 +206,8 @@ class GameState:
         self._mountain = Mountain()
         self._oldHand = [[],[],[],[]]
         self._newHand = [[],[],[],[]]
+        self._matchedPatterns = [[],[],[],[]]
+
         for i in range(13):
             self._oldHand[0].append(self._mountain.draw())
             self._oldHand[2].append(self._mountain.draw())
@@ -178,6 +229,8 @@ class GameState:
             ],
             'State' : self._state,
             'PlayerNames' : self._playerNames,
+            'PatternValues':self._PatternValues,
+            'MatchedPatterns':self._matchedPatterns,
         }
 
     def _getMountainViewBySeatID(self, seatID, role):
@@ -245,6 +298,7 @@ class GameState:
                         logger.debug(f'sets={sets}')
                         if len(sets) != len(val)-1: return False
                         self._state = {'Main':'PlayerXWon','X':role}
+                        self._updateMatchedPatterns(seatID, val)
                         return True
                     if actionType=='Kan0':
                         tids = action.get('Value',None)
@@ -259,6 +313,7 @@ class GameState:
                         if len(self._mountain)<=0: return False
                         logger.debug('All check passed.')
                         self._buildSet(seatID, sorted(tids))
+                        self._organizeHand(seatID)
                         self._drawTile(seatID)
                         self._state = {'Main':'PlayerXHandleDraw', 'X':role, 'IsKanDraw':True}
                         return True
@@ -287,6 +342,7 @@ class GameState:
                         logger.debug('All checks passed.')
                         self._removeTile(tidToAddToSet)
                         self._builtSets[seatID][sid].addTile(tidToAddToSet)
+                        self._organizeHand(seatID)
                         self._drawTile(seatID)
                         self._state = {'Main':'PlayerXHandleDraw', 'X':role, 'IsKanDraw':True}
                         return True
@@ -352,6 +408,7 @@ class GameState:
                         if len(sets) != len(val)-1: return False
 
                         self._state = {'Main':'PlayerXWon','X':role}
+                        self._updateMatchedPatterns(seatID,val)
                         return True
                     elif actionType=='Kan1':
                         tids = action.get('Value', [])
@@ -413,3 +470,126 @@ class GameState:
         return None
     def finished(self):
         return self._state['Main'] in ('PlayerXWon','Finished')
+
+    def _updateMatchedPatterns(self, seatID, handGroups):
+        '''(Re-)calculate bonus patterns for winner.
+        @params seatID      The winner's seatID.
+        @params handGroups  How the tiles in hand is grouped into sets and pairs.
+        @returns            List of patterns hit by the winner.
+        '''
+        self._matchedPatterns[seatID] = []
+
+        for pattern,value in self._PatternValues.items():
+            patternChecker = f"_check{pattern}"
+            if getattr(self, patternChecker)(seatID, handGroups):
+                self._matchedPatterns[seatID].append(pattern)
+
+    def _checkOneQuad(self, seatID, handGroups):
+        return len([set for set in self._builtSets[seatID] if set.isQuad()])==1
+
+    def _checkRedDragonTriplet(self, seatID, handGroups):
+        tileGroups = handGroups + [set.getTiles() for set in self._builtSets[seatID]]
+        for tileGroup in tileGroups:
+            if CheckTriplet(tileGroup, ReturnTGID=True)==33 or CheckQuad(tileGroup, ReturnTGID=True)==33:
+                return True
+        return False
+
+    def _checkGreenDragonTriplet(self, seatID, handGroups):
+        tileGroups = handGroups + [set.getTiles() for set in self._builtSets[seatID]]
+        for tileGroup in tileGroups:
+            if CheckTriplet(tileGroup, ReturnTGID=True)==32 or CheckQuad(tileGroup, ReturnTGID=True)==32:
+                return True
+        return False
+
+    def _checkWhiteDragonTriplet(self, seatID, handGroups):
+        tileGroups = handGroups + [set.getTiles() for set in self._builtSets[seatID]]
+        for tileGroup in tileGroups:
+            if CheckTriplet(tileGroup, ReturnTGID=True)==31 or CheckQuad(tileGroup, ReturnTGID=True)==31:
+                return True
+        return False
+
+    def edit(self, request):
+        logger.debug(f"Handling Edit request: {request}")
+        cmd = request.get('Command', None)
+        if cmd=='Swap':
+            logger.debug(f"Handling Swap command.")
+            locs = request.get('Locations', [])
+            if type(locs)!=list or len(locs)!=2:
+                logger.debug(f"Invalid locations.")
+                return False
+            area0 = locs[0].get('Area', None)
+            seatID0 = locs[0].get('SeatID', None)
+            idx0 = locs[0].get('Index', None)
+            area1 = locs[1].get('Area', None)
+            seatID1 = locs[1].get('SeatID', None)
+            idx1 = locs[1].get('Index', None)
+            tid0 = self.getTidByLocation(Area=area0, SeatID=seatID0, Index=idx0)
+            tid1 = self.getTidByLocation(Area=area1, SeatID=seatID1, Index=idx1)
+            logger.debug(f"tid0={tid0}")
+            logger.debug(f"tid1={tid1}")
+            if tid0==None or tid1==None:
+                return False
+            assert self.setTidByLocation(Area=area0, SeatID=seatID0, Index=idx0, NewValue=tid1)
+            assert self.setTidByLocation(Area=area1, SeatID=seatID1, Index=idx1, NewValue=tid0)
+            return True
+        else:
+            return False
+
+    def getTidByLocation(self, **kwargs):
+        area = kwargs.get('Area', None)
+        seatID = kwargs.get('SeatID', None)
+        index = kwargs.get('Index', None)
+        logger.debug(f'[getTidByLocation]: area={area},seatID={seatID},index={index}')
+        if seatID not in (0,1,2,3):
+            logger.debug('Invalid seatID.')
+            return None
+        if area=='Mountain':
+            tiles = self._mountain.tiles[seatID]
+        elif area=='River':
+            tiles = self._river[seatID]
+        elif area=='OldHand':
+            tiles = self._oldHand[seatID]
+        elif area=='NewHand':
+            tiles = self._newHand[seatID]
+        elif area=='BuiltSet0' and len(self._builtSets)>=1:
+            tiles = self._builtSets[seatID][0].getTiles()
+        elif area=='BuiltSet1' and len(self._builtSets)>=2:
+            tiles = self._builtSets[seatID][1].getTiles()
+        elif area=='BuiltSet2' and len(self._builtSets)>=3:
+            tiles = self._builtSets[seatID][2].getTiles()
+        elif area=='BuiltSet3' and len(self._builtSets)>=4:
+            tiles = self._builtSets[seatID][3].getTiles()
+        else:
+            tiles = []
+        return tiles[index] if index>=0 and index<len(tiles) else None
+
+    def setTidByLocation(self, **kwargs):
+        area = kwargs.get('Area', None)
+        seatID = kwargs.get('SeatID', None)
+        index = kwargs.get('Index', None)
+        newval = kwargs.get('NewValue', None)
+        if newval not in range(136): return False
+        if seatID not in (0,1,2,3): return False
+        if area=='Mountain':
+            tiles = self._mountain.tiles[seatID]
+        elif area=='River':
+            tiles = self._river[seatID]
+        elif area=='OldHand':
+            tiles = self._oldHand[seatID]
+        elif area=='NewHand':
+            tiles = self._newHand[seatID]
+        elif area=='BuiltSet0' and len(self._builtSets)>=1:
+            tiles = self._builtSets[seatID][0].tiles
+        elif area=='BuiltSet1' and len(self._builtSets)>=2:
+            tiles = self._builtSets[seatID][1].tiles
+        elif area=='BuiltSet2' and len(self._builtSets)>=3:
+            tiles = self._builtSets[seatID][2].tiles
+        elif area=='BuiltSet3' and len(self._builtSets)>=4:
+            tiles = self._builtSets[seatID][3].tiles
+        else:
+            return False
+
+        if index>=0 and index<len(tiles):
+            tiles[index] = newval
+            return True
+        return False
