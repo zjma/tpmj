@@ -62,6 +62,9 @@ export function getPatternUIData(pattern) {
         case 'OneQuad':
             result.DisplayName = '单杠';
             break;
+        case 'AllTriplets':
+            result.DisplayName = '对对和';
+            break;
         default:
             result.DisplayName = '???';
             break;

@@ -194,6 +194,7 @@ class GameState:
             'RedDragonTriplet':1,
             'GreenDragonTriplet':1,
             'WhiteDragonTriplet':1,
+            'AllTriplets':2,
         }
 
         self._playerNames = [player0, player1]
@@ -481,6 +482,7 @@ class GameState:
 
         for pattern,value in self._PatternValues.items():
             patternChecker = f"_check{pattern}"
+            logger.debug(f'[_updateMatchedPatterns] invoking {patternChecker}.')
             if getattr(self, patternChecker)(seatID, handGroups):
                 self._matchedPatterns[seatID].append(pattern)
 
@@ -507,6 +509,10 @@ class GameState:
             if CheckTriplet(tileGroup, ReturnTGID=True)==31 or CheckQuad(tileGroup, ReturnTGID=True)==31:
                 return True
         return False
+
+    def _checkAllTriplets(self, seatID, handGroups):
+        tileGroups = handGroups + [set.getTiles() for set in self._builtSets[seatID]]
+        return len([0 for tileGroup in tileGroups if CheckTriplet(tileGroup)])==4
 
     def edit(self, request):
         logger.debug(f"Handling Edit request: {request}")
