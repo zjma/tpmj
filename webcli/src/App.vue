@@ -6,9 +6,8 @@
         <mode-dialog :active="IsModeDialogActive" :default-mode="mode" @play-selected="onPlayModeSelected" @observe-selected="onObserveModeSelected" @cancelled="onModeSelectionCancelled" />
         <player-waiting-dialog :active="IsPlayerWaitingDialogActive" @cancelled="onPlayerWaitingCancelled" @selected="onPlayerGameSelected"/>
         <observer-waiting-dialog :active="IsObserverWaitingDialogActive" @cancelled="onObserverWaitingCancelled" @selected="onObservedGameSelected"/>
-        <result-dialog :active="IsResultDialogActive" :gameStateView="gameStateView" @finished="onGameResultConfirmed"/>
         <admin-monitoring-table v-if="IsAdminMonitoring" :active="IsAdminMonitoring" :GameID="MonitoringGameID"/>
-        <minimum-digital-table v-else :gameStateView="gameStateView" :myRole="MyRole" @UserAction="onUserAction"/>
+        <minimum-digital-table v-if="State=='Playing'" :active="State=='Playing'" :GameID="GameID" :RoleID="MyRole" @Exit="onPlayerLeavingGameRoom"/>
     </v-app>
 </template>
 
@@ -25,7 +24,6 @@ import ModeDialog from './ModeDialog.vue';
 import ObserverWaitingDialog from './ObserverWaitingDialog.vue';
 import PlayerWaitingDialog from './PlayerWaitingDialog.vue';
 import MinimumDigitalTable from './MinimumDigitalTable.vue';
-import GameResultDialog from './GameResultDialog.vue';
 import AdminMonitoringTable from './AdminMonitoringTable.vue';
 import ChooseGameDialog from './ChooseGameDialog.vue';
 
@@ -38,7 +36,6 @@ export default {
         'observer-waiting-dialog'   : ObserverWaitingDialog,
         'player-waiting-dialog'     : PlayerWaitingDialog,
         'minimum-digital-table'     : MinimumDigitalTable,
-        'result-dialog'             : GameResultDialog,
         'admin-monitoring-table'    : AdminMonitoringTable,
         'choose-game-dialog'        : ChooseGameDialog,
     },
@@ -47,11 +44,11 @@ export default {
             UserName            : 'NoName',
             mode                : 'Play',
             State               : 'UserLoggingIn',
-            // State               : 'GameFinished',
             MySeat              : 0,
             gameStateView       : Game2Util.randGameStateView(),
             counter             : 0,
             GameID              : uuid.v4(),
+            RoleID              : null,
             MyRole              : 0,
             PlayerWaitingQueryPending : false,
             PlayingQueryPending: false,
@@ -90,31 +87,6 @@ export default {
             }
         }, 2000)
 
-        //Thread for polling backend for game state (playing).
-        setInterval(function(){
-            if (self.State == 'Playing' && !self.PlayingQueryPending) {
-                self.PlayingQueryPending = true
-                axios.post(self.ApiServerPlayUrl, {
-                    Action:'GetGameState',
-                    GameID:self.GameID,
-                    RoleID:self.MyRole,
-                }).then(response => {
-                    self.PlayingQueryPending = false
-                    var sub = response.data
-                    if (self.State == 'Playing') {
-                        self.gameStateView = sub
-                        if (sub.State.Main == 'PlayerXWon' || sub.State.Main == 'Finished') {
-                            window.console.log(sub.State)
-                            self.State = 'GameFinished'
-                        }
-                    }
-                }).catch(function(error){
-                    self.PlayingQueryPending = false
-                    window.console.log(error)
-                })
-            }
-        }, 1000)
-
         //Thread for polling backend for waiting state.
         setInterval(function(){
             if (self.State == 'PlayerWaitingForGame' && !self.PlayerWaitingQueryPending) {
@@ -130,7 +102,8 @@ export default {
                         window.console.log(sub)
                         self.State = 'Playing'
                         self.GameID = sub.GameID
-                        self.MyRole = sub.Role
+                        self.MyRole = sub.Role;
+                        self.RoleID = sub.Role;
                         self.MySeat = (sub.Role==0)?0:2
                     }
                 }).catch(function(error){
@@ -203,16 +176,6 @@ export default {
             window.console.log("Starting to observe " + gameID + ".")
             this.State = 'Playing'
         },
-        onUserAction(action){
-            window.console.log("User action!")
-            window.console.log(action)
-            axios.post(this.ApiServerPlayUrl, {
-                Action:'PerformGameAction',
-                GameID:this.GameID,
-                RoleID: this.MyRole,
-                Payload:action,
-            })
-        },
         onGameResultConfirmed(){
             window.console.log("Game result confirmed.");
             this.State = 'UserSelectingMode';
@@ -226,6 +189,10 @@ export default {
             this.MonitoringGameID = gameID;
             this.State = 'AdminMonitoring';
         },
+        onPlayerLeavingGameRoom(){
+            window.console.log(`onPlayerLeavingGameRoom`);
+            this.State = 'UserSelectingMode';
+        }
     },
 };
 </script>

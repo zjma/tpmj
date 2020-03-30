@@ -265,6 +265,8 @@ class GameState:
         @return True if the action was accepted, or False otherwise.
         '''
         logger.info(f'OldState={self._state}')
+        logger.info(f'role={role}')
+        logger.info(f'action={action}')
         mainState = self._state.get('Main',None)
         try:
             if action==None: return False

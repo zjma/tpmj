@@ -1,6 +1,6 @@
 <template>
     <v-container id='TheContainer' fluid>
-        <v-row id='GameView' align='end'>
+        <v-row v-if="gameStateView" id='GameView' align='end'>
             <v-col md='6' cols='12'>
                 <div class='OppoArea'>
                     <v-row>
@@ -77,42 +77,59 @@
                 </v-list>
             </v-col>
         </v-row>
+        <v-row v-else>Loading game {{this.GameID}}...</v-row>
+        <result-dialog :active="ShowingResultDialog" :gameStateView='gameStateView' @done="onResultDialogClosing"></result-dialog>
     </v-container>
 </template>
 
 <script>
-import * as Game2Utils from './game2.js'
-import * as styling from './PlayerAreaStyling.js'
+import axios from 'axios';
+import * as Game2Utils from './game2.js';
+import * as styling from './PlayerAreaStyling.js';
+import GameResultDialog from './GameResultDialog.vue';
+
 export default {
     name : 'MinimumDigitalTable',
     components : {
+        'result-dialog' : GameResultDialog,
     },
     props: {
-        gameStateView   : Object,
-        myRole          : Number,
+        active : Boolean,
+        GameID : String,
+        RoleID : Number,
+    },
+    data: function(){
+        window.console.log("[MinimumDigitalTable] initing data.");
+        return {
+            QueryPending : false,
+            ApiServerPlayUrl : `${process.env.VUE_APP_API_SERVER_URL}/tpmj`,
+            gameStateView : Game2Utils.randGameStateView(),
+            ShowingResultDialog : false,
+            ResultPrompted : false,
+        };
     },
     computed: {
         mySeat: function() {
-            return Game2Utils.getSeatByRole(this.myRole)
+            return Game2Utils.getSeatByRole(this.RoleID)
         },
         oppoSeat: function() {
-            return Game2Utils.getSeatByRole(1-this.myRole)
+            return Game2Utils.getSeatByRole(1-this.RoleID)
         },
         OppoRoleLabel: function(){
-            return styling.getSeatChar(1-this.myRole)
+            return styling.getSeatChar(1-this.RoleID)
         },
         SelfRoleLabel: function(){
-            return styling.getSeatChar(this.myRole)
+            return styling.getSeatChar(this.RoleID)
         },
         MountainRemaining: function(){
             var accumulator = (accumulated, toProcess) => toProcess.Mountain.filter(v => v!=undefined).length + accumulated
             return this.gameStateView.AreaViews.reduce(accumulator, 0)
         },
         SelfName: function(){
-            return this.gameStateView.PlayerNames[this.myRole]
+            return this.gameStateView.PlayerNames[this.RoleID]
         },
         OppoName: function(){
-            return this.gameStateView.PlayerNames[1-this.myRole]
+            return this.gameStateView.PlayerNames[1-this.RoleID]
         },
         SelfRiver: function(){
             return this.gameStateView.AreaViews[this.mySeat].River.map(v => styling.getTileViewChar(v)).join('')
@@ -161,47 +178,77 @@ export default {
             return (set) ? set.TileViews.map(v => styling.getTileViewChar(v)).join('') : undefined
         },
         ActionUiData: function(){
-            var actions = Game2Utils.getAction(this.gameStateView, this.myRole)
-            return actions.map(a => styling.getActionUIData(a))
-        },
+            var actions = Game2Utils.getAction(this.gameStateView, this.RoleID);
+            var result = actions.map(a => styling.getActionUIData(a));
 
+            //Special actions: show score & continue after game finishes.
+            if (this.gameStateView.State.Main == 'PlayerXWon' || this.gameStateView.State.Main == 'Finished') {
+                result.push({
+                    Type: '',
+                    Value: 'Show Score',
+                    Data: 'ShowScore',
+                });
+                result.push({
+                    Type: '',
+                    Value: 'Continue',
+                    Data: 'Exit',
+                });
+            }
+
+            return result;
+        },
+    },
+    mounted: function(){
+        const self = this;
+
+        setInterval(function(){
+            if (self.active && !self.QueryPending) {
+                self.QueryPending = true;
+                axios.post(self.ApiServerPlayUrl, {
+                    Action:'GetGameState',
+                    GameID:self.GameID,
+                    RoleID:self.RoleID,
+                }).then(response => {
+                    self.QueryPending = false;
+                    var sub = response.data;
+                    if (self.active) {
+                        self.gameStateView = sub;
+                        if (sub.State.Main=='PlayerXWon' || sub.State.Main=='Finished') {
+                            self.onGameResultAvailable();
+                        }
+                    }
+                }).catch(function(error){
+                    self.QueryPending = false;
+                    window.console.log(error);
+                })
+            }
+        },1000)
     },
     methods: {
-        onAction: function(actionData){
-            window.console.log(actionData)
-            this.$emit('UserAction',actionData)
+        onGameResultAvailable:function(){
+            if (!this.ResultPrompted) {
+                this.ShowingResultDialog = true;
+                this.ResultPrompted = true;
+            }
         },
-        onSelfAction: function(action){
-            window.console.log('Self action!')
-            window.console.log(action)
-            this.$emit('UserAction', {
-                Area: 'Self',
-                Action: action,
-            })
+        onAction(action){
+            window.console.log("User action!");
+            window.console.log(action);
+            if (action=='Exit'){
+                this.$emit('Exit');
+            } else if (action=='ShowScore'){
+                this.ShowingResultDialog = true;
+            } else {
+                axios.post(this.ApiServerPlayUrl, {
+                    Action:'PerformGameAction',
+                    GameID:this.GameID,
+                    RoleID: this.RoleID,
+                    Payload:action,
+                });
+            }
         },
-        onOppoAction: function(action){
-            window.console.log('Oppo action!')
-            window.console.log(action)
-            this.$emit('UserAction', {
-                Area: 'Oppo',
-                Action: action,
-            })
-        },
-        onLeftAction: function(action){
-            window.console.log('Left action!')
-            window.console.log(action)
-            this.$emit('UserAction', {
-                Area: 'Left',
-                Action: action,
-            })
-        },
-        onRightAction: function(action){
-            window.console.log('Right action!')
-            window.console.log(action)
-            this.$emit('UserAction', {
-                Area: 'Right',
-                Action: action,
-            })
+        onResultDialogClosing: function(){
+            this.ShowingResultDialog = false;
         },
     },
 }

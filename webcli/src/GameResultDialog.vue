@@ -13,7 +13,7 @@
             </v-container>
             <v-card-actions>
                 <v-spacer></v-spacer>
-                <v-btn color="blue darken-1" text @click="onNext()">Next</v-btn>
+                <v-btn color="blue darken-1" text @click="onNext">OK</v-btn>
             </v-card-actions>
         </v-card>
     </v-dialog>
@@ -27,7 +27,7 @@ export default {
     name: 'GameResultDialog',
     props : {
         active:Boolean,
-        gameStateView:Object
+        gameStateView:Object,
     },
     computed: {
         ResultTitle : function() {
@@ -35,11 +35,12 @@ export default {
             switch (gsv.State.Main) {
                 case 'PlayerXWon':
                     var roleID = gsv.State.X;
-                    var action = (gsv.State.WinningTileFromPlayer == roleID) ? "Tsumo" : "Ron";
+                    var seatID = Game2Utils.getSeatByRole(roleID);
+                    var action = (gsv.AreaViews[seatID].NewHand.length>=1) ? "Tsumo" : "Ron";
                     var result = `${gsv.PlayerNames[roleID]} ${action}`;
                     return result;
                 default:
-                    throw `Unimplemented for ${gsv.State.Main}`
+                    return 'Unexpected result';
             }
         },
         WinnderHand : function() {
@@ -65,13 +66,12 @@ export default {
             var roleID = gsv.State.X;
             var seatID = Game2Utils.getSeatByRole(roleID);
             var total = Game2Utils.getTotalPatternValue(gsv, seatID);
-            window.console.log(`totalFan=${total}`)
             return styling.getPatternValueStr(total);
         }
     },
     methods: {
         onNext : function(){
-            this.$emit('finished');
+            this.$emit('done');
         }
     }
 }
