@@ -4,16 +4,17 @@
             <v-card-title class="ResultTitle">
                 <span class="headline">{{ResultTitle}}</span>
             </v-card-title>
-            <v-container>
+            <v-container v-if="HasWinner">
                 <v-row class="pl-10 pr-10 ResultHandShow">{{WinnderHand}}</v-row>
                 <v-row class="pl-10 pr-10 pb-5 ResultSetShow">{{WinnerSetRow}}</v-row>
                 <v-row v-for='(pattern,idx) in PatternUIData' :key='idx'><v-col class="PatternName">{{pattern.DisplayName}}</v-col><v-col class="PatternValue">{{pattern.DisplayValue}}</v-col></v-row>
                 <v-divider class="ma-4"/>
                 <v-row class="TotalValue">{{WinnerTotalValue}}</v-row>
             </v-container>
+            <v-container v-else></v-container>
             <v-card-actions>
                 <v-spacer></v-spacer>
-                <v-btn color="blue darken-1" text @click="onNext">OK</v-btn>
+                <v-btn color="blue darken-1" text @click="onNext">{{NextButtonText}}</v-btn>
             </v-card-actions>
         </v-card>
     </v-dialog>
@@ -30,15 +31,23 @@ export default {
         gameStateView:Object,
     },
     computed: {
+        HasWinner:function(){
+            return this.gameStateView.State.Main=='PlayerXWon';
+        },
+        NextButtonText:function(){
+            return styling.DialogNextButtonText;
+        },
         ResultTitle : function() {
             var gsv = this.gameStateView;
             switch (gsv.State.Main) {
                 case 'PlayerXWon':
                     var roleID = gsv.State.X;
                     var seatID = Game2Utils.getSeatByRole(roleID);
-                    var action = (gsv.AreaViews[seatID].NewHand.length>=1) ? "Tsumo" : "Ron";
+                    var action = (gsv.AreaViews[seatID].NewHand.length>=1) ? styling.TsumoResultTitleText : styling.RonResultTitleText;
                     var result = `${gsv.PlayerNames[roleID]} ${action}`;
                     return result;
+                case 'Finished':
+                    return styling.DrawResultTitleText;
                 default:
                     return 'Unexpected result';
             }
@@ -47,7 +56,11 @@ export default {
             var gsv = this.gameStateView;
             var roleID = gsv.State.X;
             var seatID = Game2Utils.getSeatByRole(roleID);
-            return styling.getHandStr(gsv, seatID);
+            var lastTileView = {
+                IsValueVisible : true,
+                Value : gsv.State.LastTile,
+            };
+            return styling.getTileViewListStr(gsv.AreaViews[seatID].OldHand)+' '+styling.getTileViewChar(lastTileView);
         },
         WinnerSetRow : function() {
             var gsv = this.gameStateView;

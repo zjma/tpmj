@@ -143,3 +143,8 @@ export function getActionUIData(action) {
             return undefined
     }
 }
+
+export const DrawResultTitleText = "流局";
+export const TsumoResultTitleText = "自摸";
+export const RonResultTitleText = "铳和";
+export const DialogNextButtonText = "好的";

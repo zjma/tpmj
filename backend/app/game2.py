@@ -300,7 +300,7 @@ class GameState:
                         sets = [0 for grp in val if CheckTriplet(grp) or CheckSequence(grp)]
                         logger.debug(f'sets={sets}')
                         if len(sets) != len(val)-1: return False
-                        self._state = {'Main':'PlayerXWon','X':role}
+                        self._state = {'Main':'PlayerXWon','X':role,'LastTile':self._newHand[seatID][-1]}
                         self._updateMatchedPatterns(seatID, val)
                         return True
                     if actionType=='Kan0':
@@ -410,7 +410,7 @@ class GameState:
                         logger.debug(f'sets={sets}')
                         if len(sets) != len(val)-1: return False
 
-                        self._state = {'Main':'PlayerXWon','X':role}
+                        self._state = {'Main':'PlayerXWon','X':role,'LastTile':self._river[oppoSeatID][-1]}
                         self._updateMatchedPatterns(seatID,val)
                         return True
                     elif actionType=='Kan1':
