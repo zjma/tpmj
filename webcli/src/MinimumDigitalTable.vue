@@ -25,7 +25,7 @@
                     <div class='Hand TileOnlyContainer'>
                         {{OppoHand}}
                     </div>
-                    <v-row class='TileOnlyContainer'>
+                    <v-row class='TileOnlyContainer BuiltSet'>
                         <v-col>{{OppoSet3}}</v-col>
                         <v-col>{{OppoSet2}}</v-col>
                         <v-col>{{OppoSet1}}</v-col>
@@ -58,7 +58,7 @@
                     <div class='Hand TileOnlyContainer'>
                         {{SelfHand}}
                     </div>
-                    <v-row class='TileOnlyContainer'>
+                    <v-row class='TileOnlyContainer BuiltSet'>
                         <v-col>{{SelfSet3}}</v-col>
                         <v-col>{{SelfSet2}}</v-col>
                         <v-col>{{SelfSet1}}</v-col>
@@ -254,7 +254,7 @@ export default {
 }
 </script>
 
-<style>
+<style scoped>
 .PlayerName {
     white-space: nowrap;
     overflow: hidden;
@@ -290,8 +290,24 @@ export default {
 .ActionPreview {
     font-size: 2rem;
 }
+/*
+@font-face {
+  font-family: "color-emoji";
+  src: local("Apple Color Emoji"),
+       local("Segoe UI Emoji"),
+       local("Segoe UI Symbol"),
+       local("Noto Color Emoji");
+} */
 
 .TileOnlyContainer {
-    font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans",sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol","Noto Color Emoji";
+    font-size: 1.5rem;
+    /* font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans",sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol","Noto Color Emoji"; */
+    font-family: "Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol","Noto Color Emoji";
 }
+
+.BuiltSet {
+}
+
+
+
 </style>

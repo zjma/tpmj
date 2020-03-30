@@ -151,11 +151,7 @@ export default {
 }
 </script>
 
-<style>
-label {
-    width : 20%;
-}
-
+<style scoped>
 .selected {
     animation: blinker 1s linear infinite;
 }
