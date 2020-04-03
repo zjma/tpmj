@@ -148,3 +148,7 @@ export const DrawResultTitleText = "流局";
 export const TsumoResultTitleText = "自摸";
 export const RonResultTitleText = "铳和";
 export const DialogNextButtonText = "好的";
+export const GameNameText = "索子麻雀练习";
+export const MountainRemainingLabelText = "牌山剩余";
+export const ObserveButtonText = "观战";
+export const PlayButtonText = "匹配";

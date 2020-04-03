@@ -1,6 +1,6 @@
 <template>
-    <v-container id='TheContainer' fluid>
-        <v-row v-if="gameStateView" id='GameView' align='end'>
+    <v-container id='TheContainer' class="fill-height" fluid>
+        <v-row v-if="isGameStateViewValid" id='GameView' align='end'>
             <v-col md='6' cols='12'>
                 <div class='OppoArea'>
                     <v-row>
@@ -33,7 +33,7 @@
                     </v-row>
                 </div>
                 <v-card>
-                    <v-card-text class='GameMetadata'>索子麻雀练习 · 牌山剩余:{{MountainRemaining}}</v-card-text>
+                    <v-card-text class='GameMetadata'>{{BadgeText}}</v-card-text>
                 </v-card>
                 <div>
                     <v-row>
@@ -77,7 +77,9 @@
                 </v-list>
             </v-col>
         </v-row>
-        <v-row v-else>Loading game {{this.GameID}}...</v-row>
+        <div v-else id='PendingView'>
+            <div class="lds-ring"><div></div><div></div><div></div><div></div></div>
+        </div>
         <result-dialog :active="ShowingResultDialog" :gameStateView='gameStateView' @done="onResultDialogClosing"></result-dialog>
     </v-container>
 </template>
@@ -104,11 +106,15 @@ export default {
             QueryPending : false,
             ApiServerPlayUrl : `${process.env.VUE_APP_API_SERVER_URL}/tpmj`,
             gameStateView : Game2Utils.randGameStateView(),
+            isGameStateViewValid : false,
             ShowingResultDialog : false,
             ResultPrompted : false,
         };
     },
     computed: {
+        BadgeText:function(){
+            return `${styling.GameNameText} · ${styling.MountainRemainingLabelText}:${this.MountainRemaining}`;
+        },
         mySeat: function() {
             return Game2Utils.getSeatByRole(this.RoleID)
         },
@@ -213,6 +219,7 @@ export default {
                     var sub = response.data;
                     if (self.active) {
                         self.gameStateView = sub;
+                        self.isGameStateViewValid = true;
                         if (sub.State.Main=='PlayerXWon' || sub.State.Main=='Finished') {
                             self.onGameResultAvailable();
                         }
@@ -308,6 +315,45 @@ export default {
 .BuiltSet {
 }
 
+.lds-ring {
+    width: 100px;
+    height: 100px;
+    margin-left: auto;
+    margin-right: auto;
+}
 
+.lds-ring div {
+    box-sizing: border-box;
+    display: block;
+    position: absolute;
+    width: 100px;
+    height: 100px;
+    margin: 8px;
+    border: 8px solid #fff;
+    border-radius: 50%;
+    animation: lds-ring 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+    border-color: #82b1ff transparent transparent transparent;
+}
+.lds-ring div:nth-child(1) {
+    animation-delay: -0.45s;
+}
+.lds-ring div:nth-child(2) {
+    animation-delay: -0.3s;
+}
+.lds-ring div:nth-child(3) {
+    animation-delay: -0.15s;
+}
+@keyframes lds-ring {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+#PendingView {
+    width:100%;
+}
 
 </style>

@@ -14,7 +14,7 @@
             <v-container v-else></v-container>
             <v-card-actions>
                 <v-spacer></v-spacer>
-                <v-btn color="blue darken-1" text @click="onNext">{{NextButtonText}}</v-btn>
+                <v-btn color="blue darken-1" text large @click="onNext"><v-icon>mdi-check</v-icon></v-btn>
             </v-card-actions>
         </v-card>
     </v-dialog>

@@ -1,47 +1,52 @@
 <template>
     <v-dialog v-model="active" persistent max-width="600px">
         <v-card>
-            <v-card-title>
-                <span class="headline">Choose Mode</span>
-            </v-card-title>
             <v-container>
-                <v-radio-group v-model="mode">
-                    <v-radio label="Play" value="Play"></v-radio>
-                    <v-radio label="Observe" value="Observe"></v-radio>
-                </v-radio-group>
+                <v-btn text outlined width="100%" min-height=100 class="ModeButton" @click="onPlay">匹配</v-btn>
+                <v-btn text outlined width="100%" min-height=100 disabled class="ModeButton">{{ObserveButtonText}}</v-btn>
             </v-container>
             <v-card-actions>
-                <v-btn color="blue darken-1" text @click="onBack()">Back</v-btn>
+                <v-btn color="blue darken-1" text large @click="onBack()"><v-icon>mdi-arrow-left</v-icon></v-btn>
                 <v-spacer></v-spacer>
-                <v-btn color="blue darken-1" text @click="onNext()">Next</v-btn>
             </v-card-actions>
         </v-card>
     </v-dialog>
 </template>
 
 <script>
+import * as styling from './PlayerAreaStyling.js';
+
 export default {
     name: 'ModeDialog',
     props : {
         active:Boolean,
         defaultMode:String
     },
-    data : function(){
-        return {
-            mode : this.defaultMode
-        };
+    computed:{
+        ObserveButtonText:function(){
+            return styling.ObserveButtonText;
+        },
+        PlayButtonText:function(){
+            return styling.PlayButtonText;
+        }
     },
     methods: {
         onBack : function(){
             this.$emit('cancelled');
         },
-        onNext : function(){
-            if (this.mode == 'Play') {
-                this.$emit('play-selected');
-            } else {
-                this.$emit('observe-selected');
-            }
-        }
+        onPlay: function(){
+            this.$emit('play-selected');
+        },
+        onObserve: function(){
+            this.$emit('observe-selected');
+        },
     }
 }
 </script>
+
+<style scoped>
+
+.DialogTitle {
+    text-align: center;
+}
+</style>

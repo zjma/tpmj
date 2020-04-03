@@ -12,7 +12,7 @@
           </v-card-text>
           <v-card-actions>
             <v-spacer></v-spacer>
-            <v-btn color="blue darken-1" text @click="onNext">Next</v-btn>
+            <v-btn color="blue darken-1" large text @click="onNext"><v-icon>mdi-arrow-right</v-icon></v-btn>
           </v-card-actions>
         </v-card>
     </v-dialog>
