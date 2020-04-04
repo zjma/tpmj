@@ -190,13 +190,13 @@ export default {
             //Special actions: show score & continue after game finishes.
             if (this.gameStateView.State.Main == 'PlayerXWon' || this.gameStateView.State.Main == 'Finished') {
                 result.push({
-                    Type: '',
-                    Value: 'Show Score',
+                    Type: styling.GameEndShowResult,
+                    Value: '',
                     Data: 'ShowScore',
                 });
                 result.push({
-                    Type: '',
-                    Value: 'Continue',
+                    Type: styling.GameEndContinue,
+                    Value: '',
                     Data: 'Exit',
                 });
             }

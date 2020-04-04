@@ -77,20 +77,20 @@ export function getActionUIData(action) {
     switch (action.Type) {
         case 'Draw':
             return {
-                Type: 'Pass',
+                Type: '不要',
                 Data: action,
             }
         case 'Discard':
             switch (action.Source) {
                 case 'NewHand':
                     return {
-                        Type: 'Discard*',
+                        Type: '摸切',
                         Value: getUCharByTid(action.Value),
                         Data: action,
                     }
                 case 'OldHand':
                     return {
-                        Type: 'Discard',
+                        Type: '手切',
                         Value: getUCharByTid(action.Value),
                         Data: action,
                     }
@@ -99,43 +99,43 @@ export function getActionUIData(action) {
             }
         case 'Tsumo':
             return {
-                Type: 'Tsumo',
+                Type: '自摸',
                 Value: action.Value.map(tids => getTidListStr(tids)).join(' '),
                 Data: action,
             }
         case 'Ron':
             return {
-                Type: 'Ron',
+                Type: '铳和',
                 Value: action.Value.map(tids => getTidListStr(tids)).join(' '),
                 Data: action,
             }
         case 'Chi':
             return {
-                Type: 'Chi',
+                Type: '吃',
                 Value: action.Value.map(tid => getUCharByTid(tid)).join(''),
                 Data: action,
             }
         case 'Pon':
             return {
-                Type: 'Pon',
+                Type: '碰',
                 Value: action.Value.map(tid => getUCharByTid(tid)).join(''),
                 Data: action,
             }
         case 'Kan0':
             return {
-                Type: 'Kan',
+                Type: '暗杠',
                 Value: action.Value.map(tid => getUCharByTid(tid)).join(''),
                 Data: action,
             }
         case 'Kan1':
             return {
-                Type: 'Kan',
+                Type: '大明杠',
                 Value: action.Value.map(tid => getUCharByTid(tid)).join(''),
                 Data: action,
             }
         case 'Kan2':
             return {
-                Type: 'Kan+',
+                Type: '加杠',
                 Value: action.Value.map(tid => getUCharByTid(tid)).join(''),
                 Data: action,
             }
@@ -152,3 +152,7 @@ export const GameNameText = "索子麻雀练习";
 export const MountainRemainingLabelText = "牌山剩余";
 export const ObserveButtonText = "观战";
 export const PlayButtonText = "匹配";
+export const MatchedText = "匹配完成.";
+export const MatchingText = "正在寻找对手...";
+export const GameEndShowResult = "显示成绩";
+export const GameEndContinue = "返回大厅";

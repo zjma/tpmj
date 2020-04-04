@@ -15,11 +15,8 @@
 </template>
 
 <script>
-import Vue from 'vue'
-import axios from 'axios'
-import VueAxios from 'vue-axios'
-
-Vue.use(VueAxios, axios)
+import axios from 'axios';
+import * as styling from './PlayerAreaStyling.js';
 
 export default {
     name: 'PlayerWaitingDialog',
@@ -37,9 +34,9 @@ export default {
         },
         StatusText:function(){
             if (this.GameID==null){
-                return "正在寻找对手...";
+                return styling.MatchingText;
             } else {
-                return `已匹配.`;
+                return styling.MatchedText;
             }
         }
     },

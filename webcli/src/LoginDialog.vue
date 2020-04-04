@@ -5,7 +5,7 @@
             <v-container>
               <v-row>
                 <v-col cols="12">
-                  <v-text-field label="User name" v-model="UserName" required></v-text-field>
+                  <v-text-field label="您的昵称:" v-model="UserName" required></v-text-field>
                 </v-col>
               </v-row>
             </v-container>

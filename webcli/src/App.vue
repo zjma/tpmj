@@ -41,7 +41,7 @@ export default {
     },
     data: function() {
         var result = {
-            UserName            : 'NoName',
+            UserName            : uuid.v4().substring(0,8),
             mode                : 'Play',
             State               : 'UserLoggingIn',
             MySeat              : 0,
