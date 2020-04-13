@@ -86,12 +86,14 @@ export function getActionUIData(action) {
                     return {
                         Type: '摸切',
                         Value: getUCharByTid(action.Value),
+                        Preview: action.Preview,
                         Data: action,
                     }
                 case 'OldHand':
                     return {
                         Type: '手切',
                         Value: getUCharByTid(action.Value),
+                        Preview: action.Preview,
                         Data: action,
                     }
                 default:
@@ -101,42 +103,49 @@ export function getActionUIData(action) {
             return {
                 Type: '自摸',
                 Value: action.Value.map(tids => getTidListStr(tids)).join(' '),
+                Preview: action.Preview,
                 Data: action,
             }
         case 'Ron':
             return {
                 Type: '铳和',
                 Value: action.Value.map(tids => getTidListStr(tids)).join(' '),
+                Preview: action.Preview,
                 Data: action,
             }
         case 'Chi':
             return {
                 Type: '吃',
                 Value: action.Value.map(tid => getUCharByTid(tid)).join(''),
+                Preview: action.Preview,
                 Data: action,
             }
         case 'Pon':
             return {
                 Type: '碰',
                 Value: action.Value.map(tid => getUCharByTid(tid)).join(''),
+                Preview: action.Preview,
                 Data: action,
             }
         case 'Kan0':
             return {
                 Type: '暗杠',
                 Value: action.Value.map(tid => getUCharByTid(tid)).join(''),
+                Preview: action.Preview,
                 Data: action,
             }
         case 'Kan1':
             return {
                 Type: '大明杠',
                 Value: action.Value.map(tid => getUCharByTid(tid)).join(''),
+                Preview: action.Preview,
                 Data: action,
             }
         case 'Kan2':
             return {
                 Type: '加杠',
                 Value: action.Value.map(tid => getUCharByTid(tid)).join(''),
+                Preview: action.Preview,
                 Data: action,
             }
         default:
@@ -149,10 +158,17 @@ export const TsumoResultTitleText = "自摸";
 export const RonResultTitleText = "铳和";
 export const DialogNextButtonText = "好的";
 export const GameNameText = "索子麻雀练习";
-export const MountainRemainingLabelText = "牌山剩余";
+export const MountainRemainingLabelText = "牌山";
 export const ObserveButtonText = "观战";
 export const PlayButtonText = "匹配";
 export const MatchedText = "匹配完成.";
 export const MatchingText = "正在寻找对手...";
 export const GameEndShowResult = "显示成绩";
 export const GameEndContinue = "返回大厅";
+
+export const PatternDocs = {
+    'RedDragonTriplet': {
+        Name:'役牌·白',
+        Desc:'手中有🀆的刻/杠。',
+    }
+};

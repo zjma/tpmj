@@ -1,13 +1,30 @@
 <template>
     <v-app>
-        <div class='Version'>WebCliVersion={{WebCliVersion}}, ApiServerVersion={{ApiServerVersion}}</div>
-        <login-dialog :active="IsLoginDialogActive" :default-user-name="UserName" @finished="onLoginFinished" />
-        <choose-game-dialog :active="IsGameListDialogActive" @cancelled="onGameSelectionCancelled" @selected="onGameSelected($event)"/>
-        <mode-dialog :active="IsModeDialogActive" :default-mode="mode" @play-selected="onPlayModeSelected" @observe-selected="onObserveModeSelected" @cancelled="onModeSelectionCancelled" />
-        <player-waiting-dialog :active="IsPlayerWaitingDialogActive" :PlayerName="UserName" @cancelled="onPlayerWaitingCancelled" @selected="onPlayerGameSelected"/>
-        <observer-waiting-dialog :active="IsObserverWaitingDialogActive" @cancelled="onObserverWaitingCancelled" @selected="onObservedGameSelected"/>
-        <admin-monitoring-table v-if="IsAdminMonitoring" :active="IsAdminMonitoring" :GameID="MonitoringGameID"/>
-        <minimum-digital-table v-if="State=='Playing'" :active="State=='Playing'" :GameID="GameID" :RoleID="MyRole" @Exit="onPlayerLeavingGameRoom"/>
+        <v-app-bar app color="indigo" dark>
+            索子麻雀练习
+            <v-spacer/>
+            <v-bottom-sheet>
+                <template v-slot:activator="{ on }">
+                    <v-btn dark v-on="on" text>
+                        版本与运行状态
+                        <!-- <v-icon>mdi-access-point</v-icon> -->
+                    </v-btn>
+              </template>
+              <v-sheet height="200px">
+                  <div>WebCliVersion={{WebCliVersion}}</div>
+                  <div>ApiServerVersion={{ApiServerVersion}}</div>
+              </v-sheet>
+            </v-bottom-sheet>
+        </v-app-bar>
+        <v-content>
+            <login-dialog :active="IsLoginDialogActive" :default-user-name="UserName" @finished="onLoginFinished" />
+            <choose-game-dialog :active="IsGameListDialogActive" @cancelled="onGameSelectionCancelled" @selected="onGameSelected($event)"/>
+            <mode-dialog :active="IsModeDialogActive" :default-mode="mode" @play-selected="onPlayModeSelected" @observe-selected="onObserveModeSelected" @cancelled="onModeSelectionCancelled" />
+            <player-waiting-dialog :active="IsPlayerWaitingDialogActive" :PlayerName="UserName" @cancelled="onPlayerWaitingCancelled" @selected="onPlayerGameSelected"/>
+            <observer-waiting-dialog :active="IsObserverWaitingDialogActive" @cancelled="onObserverWaitingCancelled" @selected="onObservedGameSelected"/>
+            <admin-monitoring-table v-if="IsAdminMonitoring" :active="IsAdminMonitoring" :GameID="MonitoringGameID"/>
+            <minimum-digital-table v-if="State=='Playing'" :active="State=='Playing'" :GameID="GameID" :RoleID="MyRole" @Exit="onPlayerLeavingGameRoom"/>
+        </v-content>
     </v-app>
 </template>
 
@@ -43,11 +60,11 @@ export default {
         var result = {
             UserName            : uuid.v4().substring(0,8),
             mode                : 'Play',
-            State               : 'UserLoggingIn',
+            State               : 'Playing',
             MySeat              : 0,
             gameStateView       : Game2Util.randGameStateView(),
             counter             : 0,
-            GameID              : uuid.v4(),
+            GameID              : null,
             RoleID              : null,
             MyRole              : 0,
             PlayerWaitingQueryPending : false,
@@ -176,7 +193,6 @@ export default {
 <style>
 .Version {
     font-family: monospace;
-    text-align: right;
     font-size: 1em;
 }
 </style>
