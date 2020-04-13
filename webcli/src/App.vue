@@ -60,7 +60,7 @@ export default {
         var result = {
             UserName            : uuid.v4().substring(0,8),
             mode                : 'Play',
-            State               : 'Playing',
+            State               : 'UserLoggingIn',
             MySeat              : 0,
             gameStateView       : Game2Util.randGameStateView(),
             counter             : 0,

@@ -74,6 +74,8 @@ export function getPatternUIData(pattern) {
 }
 
 export function getActionUIData(action) {
+    window.console.log('PlayerAreaStyling.getActionUIData()');
+    window.console.log(action);
     switch (action.Type) {
         case 'Draw':
             return {

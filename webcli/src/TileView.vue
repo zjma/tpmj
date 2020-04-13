@@ -2,41 +2,42 @@
     <div :class="BorderHelperClasses" id="DimCalc">
         <div class="Scaler">
             <div :class="RotatorClasses">
-                <Back v-if="!TileView.IsValueVisible"/>
-                <Man1 v-else-if="TileCategoryID==0"/>
-                <Man2 v-else-if="TileCategoryID==1"/>
-                <Man3 v-else-if="TileCategoryID==2"/>
-                <Man4 v-else-if="TileCategoryID==3"/>
-                <Man5 v-else-if="TileCategoryID==4"/>
-                <Man6 v-else-if="TileCategoryID==5"/>
-                <Man7 v-else-if="TileCategoryID==6"/>
-                <Man8 v-else-if="TileCategoryID==7"/>
-                <Man9 v-else-if="TileCategoryID==8"/>
-                <Sou1 v-else-if="TileCategoryID==9"/>
-                <Sou2 v-else-if="TileCategoryID==10"/>
-                <Sou3 v-else-if="TileCategoryID==11"/>
-                <Sou4 v-else-if="TileCategoryID==12"/>
-                <Sou5 v-else-if="TileCategoryID==13"/>
-                <Sou6 v-else-if="TileCategoryID==14"/>
-                <Sou7 v-else-if="TileCategoryID==15"/>
-                <Sou8 v-else-if="TileCategoryID==16"/>
-                <Sou9 v-else-if="TileCategoryID==17"/>
-                <Pin1 v-else-if="TileCategoryID==18"/>
-                <Pin2 v-else-if="TileCategoryID==19"/>
-                <Pin3 v-else-if="TileCategoryID==20"/>
-                <Pin4 v-else-if="TileCategoryID==21"/>
-                <Pin5 v-else-if="TileCategoryID==22"/>
-                <Pin6 v-else-if="TileCategoryID==23"/>
-                <Pin7 v-else-if="TileCategoryID==24"/>
-                <Pin8 v-else-if="TileCategoryID==25"/>
-                <Pin9 v-else-if="TileCategoryID==26"/>
-                <Ton v-else-if="TileCategoryID==27"/>
-                <Nan v-else-if="TileCategoryID==28"/>
-                <Shaa v-else-if="TileCategoryID==29"/>
-                <Pei v-else-if="TileCategoryID==30"/>
-                <Blank v-else-if="TileCategoryID==31"/>
-                <Hatsu v-else-if="TileCategoryID==32"/>
-                <Chun v-else-if="TileCategoryID==33"/>
+                <Front class='TileGlyph' />
+                <Back class='TileGlyph' v-if="!TileView.IsValueVisible"/>
+                <Man1 class='TileGlyph' v-else-if="TileCategoryID==0"/>
+                <Man2 class='TileGlyph' v-else-if="TileCategoryID==1"/>
+                <Man3 class='TileGlyph' v-else-if="TileCategoryID==2"/>
+                <Man4 class='TileGlyph' v-else-if="TileCategoryID==3"/>
+                <Man5 class='TileGlyph' v-else-if="TileCategoryID==4"/>
+                <Man6 class='TileGlyph' v-else-if="TileCategoryID==5"/>
+                <Man7 class='TileGlyph' v-else-if="TileCategoryID==6"/>
+                <Man8 class='TileGlyph' v-else-if="TileCategoryID==7"/>
+                <Man9 class='TileGlyph' v-else-if="TileCategoryID==8"/>
+                <Sou1 class='TileGlyph' v-else-if="TileCategoryID==9"/>
+                <Sou2 class='TileGlyph' v-else-if="TileCategoryID==10"/>
+                <Sou3 class='TileGlyph' v-else-if="TileCategoryID==11"/>
+                <Sou4 class='TileGlyph' v-else-if="TileCategoryID==12"/>
+                <Sou5 class='TileGlyph' v-else-if="TileCategoryID==13"/>
+                <Sou6 class='TileGlyph' v-else-if="TileCategoryID==14"/>
+                <Sou7 class='TileGlyph' v-else-if="TileCategoryID==15"/>
+                <Sou8 class='TileGlyph' v-else-if="TileCategoryID==16"/>
+                <Sou9 class='TileGlyph' v-else-if="TileCategoryID==17"/>
+                <Pin1 class='TileGlyph' v-else-if="TileCategoryID==18"/>
+                <Pin2 class='TileGlyph' v-else-if="TileCategoryID==19"/>
+                <Pin3 class='TileGlyph' v-else-if="TileCategoryID==20"/>
+                <Pin4 class='TileGlyph' v-else-if="TileCategoryID==21"/>
+                <Pin5 class='TileGlyph' v-else-if="TileCategoryID==22"/>
+                <Pin6 class='TileGlyph' v-else-if="TileCategoryID==23"/>
+                <Pin7 class='TileGlyph' v-else-if="TileCategoryID==24"/>
+                <Pin8 class='TileGlyph' v-else-if="TileCategoryID==25"/>
+                <Pin9 class='TileGlyph' v-else-if="TileCategoryID==26"/>
+                <Ton class='TileGlyph' v-else-if="TileCategoryID==27"/>
+                <Nan class='TileGlyph' v-else-if="TileCategoryID==28"/>
+                <Shaa class='TileGlyph' v-else-if="TileCategoryID==29"/>
+                <Pei class='TileGlyph' v-else-if="TileCategoryID==30"/>
+                <Front class='TileGlyph' v-else-if="TileCategoryID==31"/>
+                <Hatsu class='TileGlyph' v-else-if="TileCategoryID==32"/>
+                <Chun class='TileGlyph' v-else-if="TileCategoryID==33"/>
             </div>
         </div>
     </div>
@@ -75,7 +76,7 @@ import Ton from './assets/Regular/Ton.svg';
 import Nan from './assets/Regular/Nan.svg';
 import Shaa from './assets/Regular/Shaa.svg';
 import Pei from './assets/Regular/Pei.svg';
-import Blank from './assets/Regular/Blank.svg';
+import Front from './assets/Regular/Front.svg';
 import Hatsu from './assets/Regular/Hatsu.svg';
 import Chun from './assets/Regular/Chun.svg';
 
@@ -117,7 +118,7 @@ export default {
         Nan,
         Shaa,
         Pei,
-        Blank,
+        Front,
         Hatsu,
         Chun,
     },
@@ -150,6 +151,9 @@ export default {
 </script>
 
 <style scoped>
+.TileGlyph {
+    position: absolute;
+}
 #DimCalc {
     --ratio: 0.06;
     --tile-border-width: 1.5px;

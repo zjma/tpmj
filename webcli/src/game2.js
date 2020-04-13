@@ -516,12 +516,12 @@ function tgDuplicatingTidRemover(accumulated, toProcess) {
 
 export function getDiscardNewActions(gameStateView, role) {
     var seat = getSeatByRole(role)
-    return gameStateView.AreaViews[seat].NewHand.map(v => getTidFromTileView(v)).filter(v => v!=undefined).reduce(tgDuplicatingTidRemover, []).map(tid => ({Type:'Discard', Source:'NewHand', Value:tid}))
+    return gameStateView.AreaViews[seat].NewHand.map(v => getTidFromTileView(v)).filter(v => v!=undefined).reduce(tgDuplicatingTidRemover, []).map(tid => ({Type:'Discard', Source:'NewHand', Value:tid, Preview:[getTileViewListByTids([tid])]}))
 }
 
 export function getDiscardOldActions(gameStateView, role) {
     var seat = getSeatByRole(role)
-    return gameStateView.AreaViews[seat].OldHand.map(v => getTidFromTileView(v)).filter(v => v!=undefined).reduce(tgDuplicatingTidRemover, []).map(tid => ({Type:'Discard', Source:'OldHand', Value:tid}))
+    return gameStateView.AreaViews[seat].OldHand.map(v => getTidFromTileView(v)).filter(v => v!=undefined).reduce(tgDuplicatingTidRemover, []).map(tid => ({Type:'Discard', Source:'OldHand', Value:tid, Preview:[getTileViewListByTids([tid])]}))
 }
 
 export function getDrawActions() {
@@ -539,6 +539,7 @@ export function getAction(gameStateView, role) {
         result = result.concat(getKan2Actions(gameStateView, role));
         result = result.concat(getDiscardNewActions(gameStateView, role));
         result = result.concat(getDiscardOldActions(gameStateView, role));
+        window.console.log(result);
         return result;
     }
 
@@ -548,6 +549,7 @@ export function getAction(gameStateView, role) {
         result = result.concat(getKan1Actions(gameStateView, role));
         result = result.concat(getPonActions(gameStateView, role));
         result = result.concat(getChiActions(gameStateView, role));
+        window.console.log(result);
         return result;
     }
 

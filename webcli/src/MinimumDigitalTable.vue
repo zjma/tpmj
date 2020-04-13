@@ -37,10 +37,7 @@
                     </div>
                 </div>
                 <v-card outlined>
-                    <v-card-text>{{BadgeText}}</v-card-text>
-                    <!-- <v-btn text large @click="onRuleBook">番种表</v-btn>
-                    <v-btn text large @click="onContrlSettings">设置</v-btn>
-                    <v-btn text large :disabled='IsGameResultAvailable' @click="onClickShowScore">本局得分</v-btn> -->
+                    <v-card-text class='GameStateMetadata'>{{BadgeText}}</v-card-text>
                 </v-card>
                 <div class='Area'>
                     <v-row>
@@ -77,16 +74,9 @@
                 </div>
             </v-col>
             <v-col cols='12' md='6' class='PlayerActions'>
-                <!-- <v-card>
-                    <v-container>
-                        <v-btn text outlined width="100%" min-height=100 class="ModeButton">匹配</v-btn>
-                        <v-btn text outlined width="100%" min-height=100 disabled class="ModeButton">something</v-btn>
-                    </v-container>
-                </v-card> -->
-
-
-                <!-- <v-list two-line>
-                    <v-list-item v-for='(action,idx) in ActionUiData' :key='idx' @click="onAction(action.Data)">
+                <v-list two-line v-if='IsGameActive' max-height=300>
+                    <v-subheader class="typewriter">{{ActionListTitle}}</v-subheader>
+                    <v-list-item v-for='(action,idx) in ActionUiData' :key='idx' @click="onActionSelected(action.Data)">
                         <v-list-item-content>
                             <div class='d-flex PreviewContainer'>
                                 <TileViewRow v-for='(row,idx) in action.Preview' :key='`preview-${idx}`' :TileViews='row' />
@@ -94,18 +84,19 @@
                             <v-list-item-subtitle>{{action.Type}}</v-list-item-subtitle>
                         </v-list-item-content>
                     </v-list-item>
-                </v-list> -->
+                </v-list>
             </v-col>
         </v-row>
         <div v-else id='PendingView'>
             <div class="lds-ring"><div></div><div></div><div></div><div></div></div>
         </div>
-        <v-footer color="primary lighten-1" padless absolute class='ActionPanel'>
-            <v-btn color="white" text outlined>你的回合(5)</v-btn>
-            <v-btn color="white" text outlined>你的回合(5)</v-btn>
-            <v-btn color="white" text outlined>你的回合(5)</v-btn>
-            <v-btn color="white" text outlined>你的回合(5)</v-btn>
-            <v-switch v-model="AutoPass" dark label="自动Pass"></v-switch>
+        <v-footer dark color="primary lighten-1" padless fixed class='ActionPanel'>
+            <v-btn text small :disabled='!IsGameResultAvailable' @click='onClickReturnToLobby'>返回大厅</v-btn>
+            <v-spacer/>
+            <v-btn text small :disabled='!IsGameResultAvailable' @click='onClickGameResultButton'>本局得点</v-btn>
+            <v-spacer/>
+            <v-btn text small @click="onRuleBook">番种表</v-btn>
+            <v-btn text small>设置</v-btn>
         </v-footer>
         <result-dialog :active="ShowingResultDialog" :gameStateView='gameStateView' @done="onResultDialogClosing"></result-dialog>
         <rulebook-dialog :active="ShowingRuleBook" :content="ruleBookContent" @done="onExitFromRuleBook"></rulebook-dialog>
@@ -140,6 +131,7 @@ export default {
             gameStateView : Game2Utils.randGameStateView(),
             isGameStateViewValid : false,
             ShowingResultDialog : false,
+            ShowingActionDialog : false,
             ResultPrompted : false,
             ShowingRuleBook : false,
             ruleBookContent : {},
@@ -147,6 +139,24 @@ export default {
         };
     },
     computed: {
+        IsGameActive:function(){
+            if (this.gameStateView.State.Main=='PlayerXWon') return false;
+            if (this.gameStateView.State.Main=='Finished') return false;
+            return true;
+        },
+        ActionListTitle:function(){
+            switch(this.gameStateView.State.Main){
+                case 'PlayerXHandleDraw':
+                case 'PlayerXToRespondToDiscard':
+                    if (this.gameStateView.State.X==this.RoleID){
+                        return '要怎么做?';
+                    }else{
+                        return `${this.gameStateView.PlayerNames[this.gameStateView.State.X]}思考中...`
+                    }
+                default:
+                    return '';
+            }
+        },
         IsGameResultAvailable: function(){
             return this.gameStateView.State.Main == 'PlayerXWon' || this.gameStateView.State.Main == 'Finished';
         },
@@ -229,23 +239,9 @@ export default {
             return (set) ? set.TileViews : [];
         },
         ActionUiData: function(){
+            window.console.log('MinimumDigitalTable.ActionUiData()');
             var actions = Game2Utils.getAction(this.gameStateView, this.RoleID);
             var result = actions.map(a => styling.getActionUIData(a));
-
-            //Special actions: show score & continue after game finishes.
-            if (this.gameStateView.State.Main == 'PlayerXWon' || this.gameStateView.State.Main == 'Finished') {
-                result.push({
-                    Type: styling.GameEndShowResult,
-                    Value: '',
-                    Data: 'ShowScore',
-                });
-                result.push({
-                    Type: styling.GameEndContinue,
-                    Value: '',
-                    Data: 'Exit',
-                });
-            }
-
             return result;
         },
     },
@@ -287,41 +283,59 @@ export default {
         },1000);
     },
     methods: {
+        onClickReturnToLobby(){
+            window.console.log('MinimumDigitalTable.onClickReturnToLobby()');
+            this.$emit('Exit');
+        },
+        onClickGameResultButton(){
+            window.console.log('MinimumDigitalTable.onClickGameResultButton()');
+            this.ShowingResultDialog = true;
+        },
+        onClickMyTurn:function(){
+            window.console.log('MinimumDigitalTable.onClickMyTurn()');
+            this.ShowingActionDialog = true;
+        },
         onExitFromRuleBook:function(){
+            window.console.log('MinimumDigitalTable.onExitFromRuleBook()');
             this.ShowingRuleBook = false;
         },
         onRuleBook:function(){
+            window.console.log('MinimumDigitalTable.onRuleBook()');
             this.ShowingRuleBook = true;
         },
         onContrlSettings:function(){
+            window.console.log('MinimumDigitalTable.onContrlSettings()');
             window.console.warn("onContrlSettings not implemented.");
         },
         onGameResultAvailable:function(){
+            window.console.log('MinimumDigitalTable.onGameResultAvailable()');
             if (!this.ResultPrompted) {
                 this.ShowingResultDialog = true;
                 this.ResultPrompted = true;
             }
         },
-        onAction(action){
-            window.console.log("User action!");
+        onActionSelected:function(action){
+            window.console.log('MinimumDigitalTable.onActionSelected()');
             window.console.log(action);
-            if (action=='Exit'){
-                this.$emit('Exit');
-            } else if (action=='ShowScore'){
-                this.ShowingResultDialog = true;
-            } else {
-                axios.post(this.ApiServerPlayUrl, {
-                    Action:'PerformGameAction',
-                    GameID:this.GameID,
-                    RoleID: this.RoleID,
-                    Payload:action,
-                });
-            }
+            this.ShowingActionDialog = false;
+
+            axios.post(this.ApiServerPlayUrl, {
+                Action:'PerformGameAction',
+                GameID:this.GameID,
+                RoleID: this.RoleID,
+                Payload:action,
+            });
+        },
+        onActionCancelled:function(){
+            window.console.log('MinimumDigitalTable.onActionCancelled()');
+            this.ShowingActionDialog = false;
         },
         onResultDialogClosing: function(){
+            window.console.log('MinimumDigitalTable.onResultDialogClosing()');
             this.ShowingResultDialog = false;
         },
         onClickShowScore:function(){
+            window.console.log('MinimumDigitalTable.onClickShowScore()');
             this.ShowingResultDialog = true;
         },
     },
@@ -329,13 +343,15 @@ export default {
 </script>
 
 <style scoped>
+.GameStateMetadata {
+    text-align: center;
+}
+
 .ActionPanel {
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
-}
-.PreviewContainer {
-    flex-wrap: wrap;
+    font-size: 0.5rem;
 }
 
 .BuiltSetContainer {
@@ -415,5 +431,4 @@ export default {
 #PendingView {
     width:100%;
 }
-
 </style>
