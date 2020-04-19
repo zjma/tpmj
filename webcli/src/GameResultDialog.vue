@@ -5,8 +5,16 @@
                 <span class="headline">{{ResultTitle}}</span>
             </v-card-title>
             <v-container v-if="HasWinner">
-                <v-row class="pl-10 pr-10 ResultHandShow">{{WinnderHand}}</v-row>
-                <v-row class="pl-10 pr-10 pb-5 ResultSetShow">{{WinnerSetRow}}</v-row>
+                <div class="d-flex">
+                    <TileViewRow :TileViews='OldHand' />
+                    <TileViewRow :TileViews='LastHand' />
+                </div>
+                <div class='BuiltSetContainer'>
+                    <TileViewRow :TileViews="Set0"/>
+                    <TileViewRow :TileViews="Set1"/>
+                    <TileViewRow :TileViews="Set2"/>
+                    <TileViewRow :TileViews="Set3"/>
+                </div>
                 <v-row v-for='(pattern,idx) in PatternUIData' :key='idx'><v-col class="PatternName">{{pattern.DisplayName}}</v-col><v-col class="PatternValue">{{pattern.DisplayValue}}</v-col></v-row>
                 <v-divider class="ma-4"/>
                 <v-row class="TotalValue">{{WinnerTotalValue}}</v-row>
@@ -23,12 +31,16 @@
 <script>
 import * as styling from './PlayerAreaStyling.js';
 import * as Game2Utils from './game2.js';
+import TileViewRow from './TileViewRow.vue';
 
 export default {
     name: 'GameResultDialog',
     props : {
         active:Boolean,
         gameStateView:Object,
+    },
+    components:{
+        'TileViewRow':TileViewRow,
     },
     computed: {
         HasWinner:function(){
@@ -52,6 +64,23 @@ export default {
                     return 'Unexpected result';
             }
         },
+        OldHand:function(){
+            var gsv = this.gameStateView;
+            var roleID = gsv.State.X;
+            var seatID = Game2Utils.getSeatByRole(roleID);
+            var result = gsv.AreaViews[seatID].OldHand;
+            window.console.log(result);
+            return result;
+        },
+        LastHand:function(){
+            var gsv = this.gameStateView;
+            var lastTileView = {
+                IsValueVisible : true,
+                Value : gsv.State.LastTile,
+            };
+            return [lastTileView];
+        },
+
         WinnderHand : function() {
             var gsv = this.gameStateView;
             var roleID = gsv.State.X;
@@ -80,7 +109,35 @@ export default {
             var seatID = Game2Utils.getSeatByRole(roleID);
             var total = Game2Utils.getTotalPatternValue(gsv, seatID);
             return styling.getPatternValueStr(total);
-        }
+        },
+        Set3: function(){
+            var gsv = this.gameStateView;
+            var roleID = gsv.State.X;
+            var seatID = Game2Utils.getSeatByRole(roleID);
+            var set = gsv.AreaViews[seatID].BuiltSets[3];
+            return (set) ? set.TileViews : [];
+        },
+        Set0: function(){
+            var gsv = this.gameStateView;
+            var roleID = gsv.State.X;
+            var seatID = Game2Utils.getSeatByRole(roleID);
+            var set = gsv.AreaViews[seatID].BuiltSets[0];
+            return (set) ? set.TileViews : [];
+        },
+        Set1: function(){
+            var gsv = this.gameStateView;
+            var roleID = gsv.State.X;
+            var seatID = Game2Utils.getSeatByRole(roleID);
+            var set = gsv.AreaViews[seatID].BuiltSets[1];
+            return (set) ? set.TileViews : [];
+        },
+        Set2: function(){
+            var gsv = this.gameStateView;
+            var roleID = gsv.State.X;
+            var seatID = Game2Utils.getSeatByRole(roleID);
+            var set = gsv.AreaViews[seatID].BuiltSets[2];
+            return (set) ? set.TileViews : [];
+        },
     },
     methods: {
         onNext : function(){
@@ -91,6 +148,13 @@ export default {
 </script>
 
 <style>
+.BuiltSetContainer {
+    display: flex;
+    flex-direction: row-row-reverse;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+}
+
 .ResultHandShow {
     font-size: 1.5em;
     justify-content: flex-start;

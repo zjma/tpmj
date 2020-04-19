@@ -41,6 +41,7 @@ export default {
         }
     },
     data : function(){
+        window.console.log('PlayerWaitingDialog initing data.');
         return {
             QueryPending:false,
             ApiServerPlayUrl    : `${process.env.VUE_APP_API_SERVER_URL}/tpmj`,
@@ -55,12 +56,16 @@ export default {
 
         //Thread for polling backend for waiting state.
         setInterval(function(){
+            window.console.log("PlayerWaitingDialog worker started.");
+
             if (self.active && self.GameID==null && !self.QueryPending) {
+                window.console.log("Should start a new RequestMatch query.");
                 self.QueryPending = true;
                 axios.post(self.ApiServerPlayUrl, {
                     Action:'RequestMatch',
                     PlayerName:self.PlayerName,
                 }).then(response => {
+                    window.console.log("RequestMatch response available.");
                     self.QueryPending = false;
                     var sub = response.data;
                     if (self.active && sub.GameID) {
@@ -74,6 +79,8 @@ export default {
                     window.console.log(error);
                 })
             }
+
+            window.console.log("PlayerWaitingDialog worker finished.");
         },1000);
 
         setInterval(function(){
@@ -89,10 +96,16 @@ export default {
     methods: {
         onBack : function(){
             this.$emit('cancelled');
+            this.resetState();
         },
         onNext(){
             this.$emit("selected", {GameID:this.GameID,RoleID:this.RoleID});
+            this.resetState();
         },
+        resetState(){
+            this.GameID = null;
+            this.RoleID = null;
+        }
     }
 }
 </script>
