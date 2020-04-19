@@ -5,7 +5,7 @@
                 <span class="headline">{{ResultTitle}}</span>
             </v-card-title>
             <v-container v-if="HasWinner">
-                <HandAndSetView :OldHand='OldHand' :NewHand='LastHand' :Set0='Set0' :Set1='Set1' :Set2='Set2' :Set3='Set3' />
+                <HandAndSetView :ScaleRatio="0.8" :OldHand='OldHand' :NewHand='LastHand' :Set0='Set0' :Set1='Set1' :Set2='Set2' :Set3='Set3' />
                 <v-row v-for='(pattern,idx) in PatternUIData' :key='idx'><v-col class="PatternName">{{pattern.DisplayName}}</v-col><v-col class="PatternValue">{{pattern.DisplayValue}}</v-col></v-row>
                 <v-divider class="ma-4"/>
                 <v-row class="TotalValue">{{WinnerTotalValue}}</v-row>

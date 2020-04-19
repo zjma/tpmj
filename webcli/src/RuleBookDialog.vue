@@ -12,30 +12,7 @@
                                 <v-col>1番</v-col>
                             </v-row>
                             <v-row><v-col>你的所有牌都是索子牌。</v-col></v-row>
-                            <v-row>
-                                <span>🀕</span>
-                                <span>🀕</span>
-                                <span>🀕</span>
-                                <span>🀕</span>
-                                <span>🀕</span>
-                                <span>🀕</span>
-                                <span>🀕</span>
-                                <span>🀕</span>
-                                <span>🀕</span>
-                                <span>🀕</span>
-                                <span>🀕</span>
-                                <span>🀕</span>
-                                <span>🀕</span>
-                                <span>🀕</span>
-                                <span>🀕</span>
-                                <span>🀕</span>
-                                <span>🀕</span>
-                                <span>🀕</span>
-                                <span>🀕</span>
-                                <span>🀕</span>
-                                <span>🀕</span>
-                                <span>🀕</span>
-                            </v-row>
+                            <HandAndSetView :ScaleRatio="0.7" :OldHand="OldHand" :NewHand="NewHand" :Set0="Set0" :Set1="Set1" :Set2="Set2" :Set3="Set3" />
                         </v-container>
                     </v-list-item>
                     <v-list-item>
@@ -218,6 +195,7 @@
 </template>
 
 <script>
+import HandAndSetView from './HandAndSetView.vue';
 
 export default {
     name: 'RuleBookDialog',
@@ -225,7 +203,64 @@ export default {
         active:Boolean,
         ruleBookContent:Object,
     },
+    components:{
+        'HandAndSetView':HandAndSetView,
+    },
     computed: {
+        OldHand:function(){
+            return [
+                {IsValueVisible:true,Value:99},
+                {IsValueVisible:true,Value:99},
+                {IsValueVisible:true,Value:99},
+                {IsValueVisible:true,Value:99},
+                {IsValueVisible:true,Value:99},
+                {IsValueVisible:true,Value:99},
+                {IsValueVisible:true,Value:99},
+                {IsValueVisible:true,Value:99},
+                {IsValueVisible:true,Value:99},
+                {IsValueVisible:true,Value:99},
+                {IsValueVisible:true,Value:99},
+                {IsValueVisible:true,Value:99},
+                {IsValueVisible:true,Value:99},
+            ];
+        },
+        NewHand:function(){
+            return [
+                {IsValueVisible:true,Value:33},
+            ];
+        },
+        Set0:function(){
+            return [
+                {IsValueVisible:true,Value:66},
+                {IsValueVisible:true,Value:66},
+                {IsValueVisible:true,Value:66},
+                {IsValueVisible:true,Value:66},
+            ];
+        },
+        Set1:function(){
+            return [
+                {IsValueVisible:true,Value:66},
+                {IsValueVisible:true,Value:66},
+                {IsValueVisible:true,Value:66},
+                {IsValueVisible:true,Value:66},
+            ];
+        },
+        Set2:function(){
+            return [
+                {IsValueVisible:true,Value:66},
+                {IsValueVisible:true,Value:66},
+                {IsValueVisible:true,Value:66},
+                {IsValueVisible:true,Value:66},
+            ];
+        },
+        Set3:function(){
+            return [
+                {IsValueVisible:true,Value:66},
+                {IsValueVisible:true,Value:66},
+                {IsValueVisible:true,Value:66},
+                {IsValueVisible:true,Value:66},
+            ];
+        },
     },
     methods: {
         onNext : function(){
