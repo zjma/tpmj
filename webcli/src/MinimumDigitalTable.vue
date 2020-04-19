@@ -21,20 +21,7 @@
                             <TileViewRow :TileViews="OppoRiver"/>
                         </v-col>
                     </v-row>
-                    <div class="d-flex">
-                        <div class='HandRowContainer'>
-                            <TileViewRow :TileViews="OppoOldHand"/>
-                        </div>
-                        <div class='HandRowContainer'>
-                            <TileViewRow :TileViews="OppoNewHand"/>
-                        </div>
-                    </div>
-                    <div class='BuiltSetContainer'>
-                        <TileViewRow :TileViews="OppoSet0"/>
-                        <TileViewRow :TileViews="OppoSet1"/>
-                        <TileViewRow :TileViews="OppoSet2"/>
-                        <TileViewRow :TileViews="OppoSet3"/>
-                    </div>
+                    <HandAndSetView :OldHand="OppoOldHand" :NewHand="OppoNewHand" :Set0="OppoSet0" :Set1="OppoSet1" :Set2="OppoSet2" :Set3="OppoSet3" />
                 </div>
                 <v-card outlined>
                     <v-card-text class='GameStateMetadata'>{{BadgeText}}</v-card-text>
@@ -57,20 +44,7 @@
                             <TileViewRow :TileViews="SelfRiver" />
                         </v-col>
                     </v-row>
-                    <div class="d-flex">
-                        <div class='HandRowContainer'>
-                            <TileViewRow :TileViews="SelfOldHand"/>
-                        </div>
-                        <div class='HandRowContainer'>
-                            <TileViewRow :TileViews="SelfNewHand"/>
-                        </div>
-                    </div>
-                    <div class='BuiltSetContainer'>
-                        <TileViewRow :TileViews="SelfSet0"/>
-                        <TileViewRow :TileViews="SelfSet1"/>
-                        <TileViewRow :TileViews="SelfSet2"/>
-                        <TileViewRow :TileViews="SelfSet3"/>
-                    </div>
+                    <HandAndSetView :OldHand="SelfOldHand" :NewHand="SelfNewHand" :Set0="SelfSet0" :Set1="SelfSet1" :Set2="SelfSet2" :Set3="SelfSet3" />
                 </div>
             </v-col>
             <v-col cols='12' md='6' class='PlayerActions'>
@@ -110,6 +84,7 @@ import * as styling from './PlayerAreaStyling.js';
 import GameResultDialog from './GameResultDialog.vue';
 import RuleBookDialog from './RuleBookDialog.vue';
 import TileViewRow from './TileViewRow.vue';
+import HandAndSetView from './HandAndSetView.vue';
 
 export default {
     name : 'MinimumDigitalTable',
@@ -117,6 +92,7 @@ export default {
         'result-dialog' : GameResultDialog,
         'rulebook-dialog': RuleBookDialog,
         'TileViewRow' : TileViewRow,
+        'HandAndSetView' : HandAndSetView,
     },
     props: {
         active : Boolean,

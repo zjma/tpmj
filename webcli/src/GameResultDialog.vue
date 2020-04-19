@@ -5,16 +5,7 @@
                 <span class="headline">{{ResultTitle}}</span>
             </v-card-title>
             <v-container v-if="HasWinner">
-                <div class="d-flex">
-                    <TileViewRow :TileViews='OldHand' />
-                    <TileViewRow :TileViews='LastHand' />
-                </div>
-                <div class='BuiltSetContainer'>
-                    <TileViewRow :TileViews="Set0"/>
-                    <TileViewRow :TileViews="Set1"/>
-                    <TileViewRow :TileViews="Set2"/>
-                    <TileViewRow :TileViews="Set3"/>
-                </div>
+                <HandAndSetView :OldHand='OldHand' :NewHand='LastHand' :Set0='Set0' :Set1='Set1' :Set2='Set2' :Set3='Set3' />
                 <v-row v-for='(pattern,idx) in PatternUIData' :key='idx'><v-col class="PatternName">{{pattern.DisplayName}}</v-col><v-col class="PatternValue">{{pattern.DisplayValue}}</v-col></v-row>
                 <v-divider class="ma-4"/>
                 <v-row class="TotalValue">{{WinnerTotalValue}}</v-row>
@@ -31,7 +22,7 @@
 <script>
 import * as styling from './PlayerAreaStyling.js';
 import * as Game2Utils from './game2.js';
-import TileViewRow from './TileViewRow.vue';
+import HandAndSetView from './HandAndSetView.vue';
 
 export default {
     name: 'GameResultDialog',
@@ -40,7 +31,7 @@ export default {
         gameStateView:Object,
     },
     components:{
-        'TileViewRow':TileViewRow,
+        'HandAndSetView':HandAndSetView,
     },
     computed: {
         HasWinner:function(){
