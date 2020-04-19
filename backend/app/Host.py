@@ -16,8 +16,12 @@ class Host:
 		self._playerToGidAndRoleMap = {}
 		self._waitingPlayers = []
 		self._lock = Lock()
-		pass
 
+		# Have a game auto-craeted for various purpose.
+		gid = uuid4().hex
+		self._gidToGameStateMap[gid] = GameState('fakep0', 'fakep1')
+		self._playerToGidAndRoleMap['fakep0'] = (gid,0)
+		self._playerToGidAndRoleMap['fakep1'] = (gid,1)
 	def handle(self, request):
 		with self._lock:
 			assert type(request)==dict
@@ -73,6 +77,17 @@ class Host:
 			for player in self._getPlayersByGameID(gameID):
 				del self._playerToGidAndRoleMap[player]
 		return ret
+
+	def getGameList(self, request):
+		return {
+			'AllGames' : [{'GameID':gid,'Players':self._getPlayersByGameID(gid)} for gid in self._gidToGameStateMap.keys()],
+		}
+
+	def editGame(self, request):
+		gameID = request.get('GameID', None)
+		gameState = self._gidToGameStateMap.get(gameID, None)
+		accepted = False if gameState==None else gameState.edit(request)
+		return {'Accepted' : accepted}
 
 	def unknownAction(self, request):
 		return {'Processed':0}

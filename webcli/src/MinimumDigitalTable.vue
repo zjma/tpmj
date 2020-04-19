@@ -1,10 +1,11 @@
 <template>
-    <v-container id='TheContainer' fluid>
-        <v-row id='GameView' align='end'>
-            <v-col md='6' cols='12'>
-                <div class='OppoArea'>
+    <v-container fluid>
+
+        <v-row v-if="isGameStateViewValid" id='GameView' align='end' no-gutters>
+            <v-col cols='12' md='6' class="GameStateView">
+                <div class='OppoArea Area'>
                     <v-row>
-                        <v-col cols='4'>
+                        <v-col class='SeatIndiContainer'>
                             <v-card outlined>
                                 <v-card-title>
                                     <div class='SeatIndicator'>
@@ -17,25 +18,15 @@
                             </v-card>
                         </v-col>
                         <v-col>
-                            <div class='RiverRow TileOnlyContainer'>
-                                {{OppoRiver}}
-                            </div>
+                            <TileViewRow :TileViews="OppoRiver"/>
                         </v-col>
                     </v-row>
-                    <div class='Hand TileOnlyContainer'>
-                        {{OppoHand}}
-                    </div>
-                    <v-row class='TileOnlyContainer'>
-                        <v-col>{{OppoSet3}}</v-col>
-                        <v-col>{{OppoSet2}}</v-col>
-                        <v-col>{{OppoSet1}}</v-col>
-                        <v-col>{{OppoSet0}}</v-col>
-                    </v-row>
+                    <HandAndSetView :OldHand="OppoOldHand" :NewHand="OppoNewHand" :Set0="OppoSet0" :Set1="OppoSet1" :Set2="OppoSet2" :Set3="OppoSet3" />
                 </div>
-                <v-card>
-                    <v-card-text class='GameMetadata'>索子麻雀练习 · 牌山剩余:{{MountainRemaining}}</v-card-text>
+                <v-card outlined>
+                    <v-card-text class='GameStateMetadata'>{{BadgeText}}</v-card-text>
                 </v-card>
-                <div>
+                <div class='Area'>
                     <v-row>
                         <v-col cols='4'>
                             <v-card outlined>
@@ -50,178 +41,620 @@
                             </v-card>
                         </v-col>
                         <v-col>
-                            <div class='RiverRow TileOnlyContainer'>
-                                {{SelfRiver}}
-                            </div>
+                            <TileViewRow :TileViews="SelfRiver" />
                         </v-col>
                     </v-row>
-                    <div class='Hand TileOnlyContainer'>
-                        {{SelfHand}}
-                    </div>
-                    <v-row class='TileOnlyContainer'>
-                        <v-col>{{SelfSet3}}</v-col>
-                        <v-col>{{SelfSet2}}</v-col>
-                        <v-col>{{SelfSet1}}</v-col>
-                        <v-col>{{SelfSet0}}</v-col>
-                    </v-row>
+                    <HandAndSetView :OldHand="SelfOldHand" :NewHand="SelfNewHand" :Set0="SelfSet0" :Set1="SelfSet1" :Set2="SelfSet2" :Set3="SelfSet3" />
                 </div>
             </v-col>
-            <v-col md='6' cols='12' class='PlayerActions'>
-                <v-list two-line>
-                    <v-list-item v-for='(action,idx) in ActionUiData' :key='idx' @click="onAction(action.Data)">
+            <v-col cols='12' md='6' class='PlayerActions'>
+                <v-list two-line v-if='IsGameActive' max-height=300>
+                    <v-subheader class="typewriter">{{ActionListTitle}}</v-subheader>
+                    <v-list-item v-for='(action,idx) in ActionUiData' :key='idx' @click="onActionSelected(action.Data)">
                         <v-list-item-content>
-                            <v-list-item-title class='TileOnlyContainer' style="font-size: 1em;">{{action.Value}}</v-list-item-title>
+                            <div class='d-flex PreviewContainer'>
+                                <TileViewRow v-for='(row,idx) in action.Preview' :key='`preview-${idx}`' :TileViews='row' />
+                            </div>
                             <v-list-item-subtitle>{{action.Type}}</v-list-item-subtitle>
                         </v-list-item-content>
                     </v-list-item>
                 </v-list>
             </v-col>
         </v-row>
+        <div v-else id='PendingView'>
+            <div class="lds-ring"><div></div><div></div><div></div><div></div></div>
+        </div>
+        <v-footer dark color="primary lighten-1" padless fixed class='ActionPanel'>
+            <v-btn text small :disabled='!IsGameResultAvailable' @click='onClickReturnToLobby'>返回大厅</v-btn>
+            <v-spacer/>
+            <v-btn text small :disabled='!IsGameResultAvailable' @click='onClickGameResultButton'>本局得点</v-btn>
+            <v-spacer/>
+            <v-btn text small @click="onRuleBook">番种表</v-btn>
+            <v-btn text small>设置</v-btn>
+        </v-footer>
+        <result-dialog :active="ShowingResultDialog" :gameStateView='gameStateView' @done="onResultDialogClosing"></result-dialog>
+        <rulebook-dialog :active="ShowingRuleBook" :content="ruleBookContent" @done="onExitFromRuleBook"></rulebook-dialog>
     </v-container>
 </template>
 
 <script>
-import * as Game2Utils from './game2.js'
-import * as styling from './PlayerAreaStyling.js'
+import axios from 'axios';
+import * as Game2Utils from './game2.js';
+import * as styling from './PlayerAreaStyling.js';
+import GameResultDialog from './GameResultDialog.vue';
+import RuleBookDialog from './RuleBookDialog.vue';
+import TileViewRow from './TileViewRow.vue';
+import HandAndSetView from './HandAndSetView.vue';
+
 export default {
     name : 'MinimumDigitalTable',
     components : {
+        'result-dialog' : GameResultDialog,
+        'rulebook-dialog': RuleBookDialog,
+        'TileViewRow' : TileViewRow,
+        'HandAndSetView' : HandAndSetView,
     },
     props: {
-        gameStateView   : Object,
-        myRole          : Number,
+        active : Boolean,
+        GameID : String,
+        RoleID : Number,
+    },
+    data: function(){
+        window.console.log("[MinimumDigitalTable].data()");
+        return {
+            QueryPending : false,
+            ApiServerPlayUrl : `${process.env.VUE_APP_API_SERVER_URL}/tpmj`,
+            gameStateView : Game2Utils.randGameStateView(),
+            isGameStateViewValid : false,
+            ShowingResultDialog : false,
+            ShowingActionDialog : false,
+            ResultPrompted : false,
+            ShowingRuleBook : false,
+            ruleBookContent : {
+                WhiteDragonTriplet : {
+                    Name:'役牌·白',
+                    Value:1,
+                    Desc:'和牌时，有白板的刻/杠。',
+                    Example:{
+                        OldHand:[
+                            {IsValueVisible:true,Value:4},
+                            {IsValueVisible:true,Value:5},
+                            {IsValueVisible:true,Value:6},
+                            {IsValueVisible:true,Value:40},
+                            {IsValueVisible:true,Value:44},
+                            {IsValueVisible:true,Value:48},
+                            {IsValueVisible:true,Value:127},
+                            {IsValueVisible:true,Value:126},
+                            {IsValueVisible:true,Value:125},
+                            {IsValueVisible:true,Value:135},
+                        ],
+                        NewHand:[
+                            {IsValueVisible:true,Value:134},
+                        ],
+                        Set0:[
+                            {IsValueVisible:true,Value:7},
+                            {IsValueVisible:true,Value:11},
+                            {IsValueVisible:true,Value:15},
+                        ],
+                        Set1:[
+                        ],
+                        Set2:[
+                        ],
+                        Set3:[
+                        ],
+                    },
+                },
+                GreenDragonTriplet : {
+                    Name:'役牌·发',
+                    Value:1,
+                    Desc:'和牌时，有发财的刻/杠。',
+                    Example:{
+                        OldHand:[
+                            {IsValueVisible:true,Value:40},
+                            {IsValueVisible:true,Value:44},
+                            {IsValueVisible:true,Value:48},
+                            {IsValueVisible:true,Value:56},
+                            {IsValueVisible:true,Value:60},
+                            {IsValueVisible:true,Value:64},
+                            {IsValueVisible:true,Value:68},
+                        ],
+                        NewHand:[
+                            {IsValueVisible:true,Value:69},
+                        ],
+                        Set0:[
+                            {IsValueVisible:true,Value:131},
+                            {IsValueVisible:true,Value:130},
+                            {IsValueVisible:true,Value:129},
+                        ],
+                        Set1:[
+                            {IsValueVisible:true,Value:4},
+                            {IsValueVisible:true,Value:5},
+                            {IsValueVisible:true,Value:6},
+                        ],
+                        Set2:[
+                        ],
+                        Set3:[
+                        ],
+                    },
+                },
+                RedDragonTriplet : {
+                    Name:'役牌·中',
+                    Value:1,
+                    Desc:'和牌时，有红中的刻/杠。',
+                    Example:{
+                        OldHand:[
+                            {IsValueVisible:true,Value:40},
+                            {IsValueVisible:true,Value:44},
+                            {IsValueVisible:true,Value:48},
+                            {IsValueVisible:true,Value:56},
+                            {IsValueVisible:true,Value:60},
+                            {IsValueVisible:true,Value:64},
+                            {IsValueVisible:true,Value:68},
+                        ],
+                        NewHand:[
+                            {IsValueVisible:true,Value:69},
+                        ],
+                        Set0:[
+                            {IsValueVisible:true,Value:135},
+                            {IsValueVisible:true,Value:134},
+                            {IsValueVisible:true,Value:133},
+                        ],
+                        Set1:[
+                            {IsValueVisible:true,Value:4},
+                            {IsValueVisible:true,Value:5},
+                            {IsValueVisible:true,Value:6},
+                        ],
+                        Set2:[
+                        ],
+                        Set3:[
+                        ],
+                    },
+                },
+                OneQuad : {
+                    Name:'单杠',
+                    Value:1,
+                    Desc:'和牌时，有1个杠。',
+                    Example:{
+                        OldHand:[
+                            {IsValueVisible:true,Value:40},
+                            {IsValueVisible:true,Value:44},
+                            {IsValueVisible:true,Value:48},
+                            {IsValueVisible:true,Value:56},
+                            {IsValueVisible:true,Value:60},
+                            {IsValueVisible:true,Value:64},
+                            {IsValueVisible:true,Value:68},
+                        ],
+                        NewHand:[
+                            {IsValueVisible:true,Value:69},
+                        ],
+                        Set0:[
+                            {IsValueVisible:true,Value:1},
+                            {IsValueVisible:true,Value:2},
+                            {IsValueVisible:true,Value:3},
+                            {IsValueVisible:true,Value:0},
+                        ],
+                        Set1:[
+                            {IsValueVisible:true,Value:120},
+                            {IsValueVisible:true,Value:121},
+                            {IsValueVisible:true,Value:122},
+                        ],
+                        Set2:[
+                        ],
+                        Set3:[
+                        ],
+                    },
+                },
+                AllTriplets : {
+                    Name:'对对和',
+                    Value:2,
+                    Desc:'和牌时，有4个刻/杠。',
+                    Example:{
+                        OldHand:[
+                            {IsValueVisible:true,Value:40},
+                            {IsValueVisible:true,Value:41},
+                            {IsValueVisible:true,Value:42},
+                            {IsValueVisible:true,Value:80},
+                        ],
+                        NewHand:[
+                            {IsValueVisible:true,Value:81},
+                        ],
+                        Set0:[
+                            {IsValueVisible:true,Value:0},
+                            {IsValueVisible:true,Value:1},
+                            {IsValueVisible:true,Value:2},
+                        ],
+                        Set1:[
+                            {IsValueVisible:true,Value:60},
+                            {IsValueVisible:true,Value:61},
+                            {IsValueVisible:true,Value:62},
+                        ],
+                        Set2:[],
+                        Set3:[],
+                    },
+                },
+                FullFlush : {
+                    Name:'清一色',
+                    Value:2,
+                    Desc:'和牌时，所有牌都是万子/索子/筒子。',
+                    Example:{
+                        OldHand:[
+                            {IsValueVisible:true,Value:36},
+                            {IsValueVisible:true,Value:37},
+                            {IsValueVisible:true,Value:38},
+                            {IsValueVisible:true,Value:40},
+                            {IsValueVisible:true,Value:41},
+                            {IsValueVisible:true,Value:42},
+                            {IsValueVisible:true,Value:48},
+                        ],
+                        NewHand:[
+                            {IsValueVisible:true,Value:49},
+                        ],
+                        Set0:[
+                            {IsValueVisible:true,Value:50},
+                            {IsValueVisible:true,Value:52},
+                            {IsValueVisible:true,Value:56},
+                        ],
+                        Set1:[
+                            {IsValueVisible:true,Value:57},
+                            {IsValueVisible:true,Value:60},
+                            {IsValueVisible:true,Value:64},
+                        ],
+                        Set2:[
+                        ],
+                        Set3:[
+                        ],
+                    },
+                },
+                TwoQuads : {
+                    Name:'双杠',
+                    Value:2,
+                    Desc:'和牌时，有2个杠。',
+                    Example:{
+                        OldHand:[
+                            {IsValueVisible:true,Value:40},
+                            {IsValueVisible:true,Value:44},
+                            {IsValueVisible:true,Value:48},
+                            {IsValueVisible:true,Value:56},
+                            {IsValueVisible:true,Value:60},
+                            {IsValueVisible:true,Value:64},
+                            {IsValueVisible:true,Value:68},
+                        ],
+                        NewHand:[
+                            {IsValueVisible:true,Value:69},
+                        ],
+                        Set0:[
+                            {IsValueVisible:true,Value:0},
+                            {IsValueVisible:true,Value:1},
+                            {IsValueVisible:true,Value:2},
+                            {IsValueVisible:true,Value:3},
+                        ],
+                        Set1:[
+                            {IsValueVisible:true,Value:120},
+                            {IsValueVisible:true,Value:121},
+                            {IsValueVisible:true,Value:122},
+                            {IsValueVisible:true,Value:123},
+                        ],
+                        Set2:[
+                        ],
+                        Set3:[
+                        ],
+                    },
+                },
+                ThreeQuads : {
+                    Name:'三杠子',
+                    Value:3,
+                    Desc:'和牌时，有3个杠。',
+                    Example:{
+                        OldHand:[
+                            {IsValueVisible:true,Value:56},
+                            {IsValueVisible:true,Value:60},
+                            {IsValueVisible:true,Value:64},
+                            {IsValueVisible:true,Value:68},
+                        ],
+                        NewHand:[
+                            {IsValueVisible:true,Value:69},
+                        ],
+                        Set0:[
+                            {IsValueVisible:true,Value:0},
+                            {IsValueVisible:true,Value:1},
+                            {IsValueVisible:true,Value:2},
+                            {IsValueVisible:true,Value:3},
+                        ],
+                        Set1:[
+                            {IsValueVisible:true,Value:120},
+                            {IsValueVisible:true,Value:121},
+                            {IsValueVisible:true,Value:122},
+                            {IsValueVisible:true,Value:123},
+                        ],
+                        Set2:[
+                            {IsValueVisible:true,Value:40},
+                            {IsValueVisible:true,Value:41},
+                            {IsValueVisible:true,Value:42},
+                            {IsValueVisible:true,Value:43},
+                        ],
+                        Set3:[
+                        ],
+                    },
+                },
+                FourQuads : {
+                    Name:'四杠子',
+                    Value:4,
+                    Desc:'和牌时，有4个杠。注：此时一定满足对对和。',
+                    Example:{
+                        OldHand:[
+                            {IsValueVisible:true,Value:68},
+                        ],
+                        NewHand:[
+                            {IsValueVisible:true,Value:69},
+                        ],
+                        Set0:[
+                            {IsValueVisible:true,Value:0},
+                            {IsValueVisible:true,Value:1},
+                            {IsValueVisible:true,Value:2},
+                            {IsValueVisible:true,Value:3},
+                        ],
+                        Set1:[
+                            {IsValueVisible:true,Value:120},
+                            {IsValueVisible:true,Value:121},
+                            {IsValueVisible:true,Value:122},
+                            {IsValueVisible:true,Value:123},
+                        ],
+                        Set2:[
+                            {IsValueVisible:true,Value:40},
+                            {IsValueVisible:true,Value:41},
+                            {IsValueVisible:true,Value:42},
+                            {IsValueVisible:true,Value:43},
+                        ],
+                        Set3:[
+                            {IsValueVisible:true,Value:61},
+                            {IsValueVisible:true,Value:60},
+                            {IsValueVisible:true,Value:62},
+                            {IsValueVisible:true,Value:63},
+                        ],
+                    },
+                },
+            },
+            AutoPass: true,
+        };
     },
     computed: {
+        IsGameActive:function(){
+            if (this.gameStateView.State.Main=='PlayerXWon') return false;
+            if (this.gameStateView.State.Main=='Finished') return false;
+            return true;
+        },
+        ActionListTitle:function(){
+            switch(this.gameStateView.State.Main){
+                case 'PlayerXHandleDraw':
+                case 'PlayerXToRespondToDiscard':
+                    if (this.gameStateView.State.X==this.RoleID){
+                        return '要怎么做?';
+                    }else{
+                        return `${this.gameStateView.PlayerNames[this.gameStateView.State.X]}思考中...`
+                    }
+                default:
+                    return '';
+            }
+        },
+        IsGameResultAvailable: function(){
+            return this.gameStateView.State.Main == 'PlayerXWon' || this.gameStateView.State.Main == 'Finished';
+        },
+        BadgeText:function(){
+            return `${styling.MountainRemainingLabelText}:${this.MountainRemaining}`;
+        },
         mySeat: function() {
-            return Game2Utils.getSeatByRole(this.myRole)
+            return Game2Utils.getSeatByRole(this.RoleID)
         },
         oppoSeat: function() {
-            return Game2Utils.getSeatByRole(1-this.myRole)
+            return Game2Utils.getSeatByRole(1-this.RoleID)
         },
         OppoRoleLabel: function(){
-            return styling.getSeatChar(1-this.myRole)
+            return styling.getSeatChar(1-this.RoleID)
         },
         SelfRoleLabel: function(){
-            return styling.getSeatChar(this.myRole)
+            return styling.getSeatChar(this.RoleID)
         },
         MountainRemaining: function(){
             var accumulator = (accumulated, toProcess) => toProcess.Mountain.filter(v => v!=undefined).length + accumulated
             return this.gameStateView.AreaViews.reduce(accumulator, 0)
         },
         SelfName: function(){
-            return this.gameStateView.PlayerNames[this.myRole]
+            return this.gameStateView.PlayerNames[this.RoleID]
         },
         OppoName: function(){
-            return this.gameStateView.PlayerNames[1-this.myRole]
+            return this.gameStateView.PlayerNames[1-this.RoleID]
         },
         SelfRiver: function(){
-            return this.gameStateView.AreaViews[this.mySeat].River.map(v => styling.getTileViewChar(v)).join('')
+            return this.gameStateView.AreaViews[this.mySeat].River;
         },
         OppoRiver: function(){
-            return this.gameStateView.AreaViews[this.oppoSeat].River.map(v => styling.getTileViewChar(v)).join('')
+            return this.gameStateView.AreaViews[this.oppoSeat].River;
         },
         SelfHand: function(){
-            var oldHandStr = this.gameStateView.AreaViews[this.mySeat].OldHand.map(v => styling.getTileViewChar(v)).join('')
-            var newHandStr = this.gameStateView.AreaViews[this.mySeat].NewHand.map(v => styling.getTileViewChar(v)).join('')
-            return oldHandStr+' '+newHandStr
+            return styling.getHandStr(this.gameStateView, this.mySeat);
         },
-        OppoHand: function(){
-            var oldHandStr = this.gameStateView.AreaViews[this.oppoSeat].OldHand.map(v => styling.getTileViewChar(v)).join('')
-            var newHandStr = this.gameStateView.AreaViews[this.oppoSeat].NewHand.map(v => styling.getTileViewChar(v)).join('')
-            return oldHandStr+' '+newHandStr
+        OppoOldHand:function(){
+            return this.gameStateView.AreaViews[this.oppoSeat].OldHand;
+        },
+        OppoNewHand:function(){
+            return this.gameStateView.AreaViews[this.oppoSeat].NewHand;
+        },
+        SelfOldHand:function(){
+            return this.gameStateView.AreaViews[this.mySeat].OldHand;
+        },
+        SelfNewHand:function(){
+            return this.gameStateView.AreaViews[this.mySeat].NewHand;
         },
         SelfSet0: function(){
-            var set = this.gameStateView.AreaViews[this.mySeat].BuiltSets[0]
-            return (set) ? set.TileViews.map(v => styling.getTileViewChar(v)).join('') : undefined
+            var set = this.gameStateView.AreaViews[this.mySeat].BuiltSets[0];
+            return (set) ? set.TileViews : [];
         },
         SelfSet1: function(){
-            var set = this.gameStateView.AreaViews[this.mySeat].BuiltSets[1]
-            return (set) ? set.TileViews.map(v => styling.getTileViewChar(v)).join('') : undefined
+            var set = this.gameStateView.AreaViews[this.mySeat].BuiltSets[1];
+            return (set) ? set.TileViews : [];
         },
         SelfSet2: function(){
-            var set = this.gameStateView.AreaViews[this.mySeat].BuiltSets[2]
-            return (set) ? set.TileViews.map(v => styling.getTileViewChar(v)).join('') : undefined
+            var set = this.gameStateView.AreaViews[this.mySeat].BuiltSets[2];
+            return (set) ? set.TileViews : [];
         },
         SelfSet3: function(){
-            var set = this.gameStateView.AreaViews[this.mySeat].BuiltSets[3]
-            return (set) ? set.TileViews.map(v => styling.getTileViewChar(v)).join('') : undefined
+            var set = this.gameStateView.AreaViews[this.mySeat].BuiltSets[3];
+            return (set) ? set.TileViews : [];
         },
         OppoSet0: function(){
-            var set = this.gameStateView.AreaViews[this.oppoSeat].BuiltSets[0]
-            return (set) ? set.TileViews.map(v => styling.getTileViewChar(v)).join('') : undefined
+            var set = this.gameStateView.AreaViews[this.oppoSeat].BuiltSets[0];
+            return (set) ? set.TileViews : [];
         },
         OppoSet1: function(){
-            var set = this.gameStateView.AreaViews[this.oppoSeat].BuiltSets[1]
-            return (set) ? set.TileViews.map(v => styling.getTileViewChar(v)).join('') : undefined
+            var set = this.gameStateView.AreaViews[this.oppoSeat].BuiltSets[1];
+            return (set) ? set.TileViews : [];
         },
         OppoSet2: function(){
-            var set = this.gameStateView.AreaViews[this.oppoSeat].BuiltSets[2]
-            return (set) ? set.TileViews.map(v => styling.getTileViewChar(v)).join('') : undefined
+            var set = this.gameStateView.AreaViews[this.oppoSeat].BuiltSets[2];
+            return (set) ? set.TileViews : [];
         },
         OppoSet3: function(){
-            var set = this.gameStateView.AreaViews[this.oppoSeat].BuiltSets[3]
-            return (set) ? set.TileViews.map(v => styling.getTileViewChar(v)).join('') : undefined
+            var set = this.gameStateView.AreaViews[this.oppoSeat].BuiltSets[3];
+            return (set) ? set.TileViews : [];
         },
         ActionUiData: function(){
-            var actions = Game2Utils.getAction(this.gameStateView, this.myRole)
-            return actions.map(a => styling.getActionUIData(a))
+            window.console.log('MinimumDigitalTable.ActionUiData()');
+            var actions = Game2Utils.getAction(this.gameStateView, this.RoleID);
+            var result = actions.map(a => styling.getActionUIData(a));
+            return result;
         },
+    },
+    mounted: function(){
+        window.console.log("[MinimumDigitalTable].mounted()");
+        const self = this;
 
+        setInterval(function(){
+            if (!self.active) return;
+
+            //If valid GameID is not given, we are probably in development.
+            //Just show the fake data.
+            if (self.GameID==null || self.RoleID==null){
+                self.isGameStateViewValid = true;
+                return;
+            }
+
+            if (!self.QueryPending) {
+                self.QueryPending = true;
+                axios.post(self.ApiServerPlayUrl, {
+                    Action:'GetGameState',
+                    GameID:self.GameID,
+                    RoleID:self.RoleID,
+                }).then(response => {
+                    self.QueryPending = false;
+                    var sub = response.data;
+                    if (self.active) {
+                        self.gameStateView = sub;
+                        self.isGameStateViewValid = true;
+                        if (sub.State.Main=='PlayerXWon' || sub.State.Main=='Finished') {
+                            self.onGameResultAvailable();
+                        }
+                    }
+                }).catch(function(error){
+                    self.QueryPending = false;
+                    window.console.log(error);
+                })
+            }
+        },1000);
     },
     methods: {
-        onAction: function(actionData){
-            window.console.log(actionData)
-            this.$emit('UserAction',actionData)
+        onClickReturnToLobby(){
+            window.console.log('MinimumDigitalTable.onClickReturnToLobby()');
+            this.$emit('Exit');
         },
-        onSelfAction: function(action){
-            window.console.log('Self action!')
-            window.console.log(action)
-            this.$emit('UserAction', {
-                Area: 'Self',
-                Action: action,
-            })
+        onClickGameResultButton(){
+            window.console.log('MinimumDigitalTable.onClickGameResultButton()');
+            this.ShowingResultDialog = true;
         },
-        onOppoAction: function(action){
-            window.console.log('Oppo action!')
-            window.console.log(action)
-            this.$emit('UserAction', {
-                Area: 'Oppo',
-                Action: action,
-            })
+        onClickMyTurn:function(){
+            window.console.log('MinimumDigitalTable.onClickMyTurn()');
+            this.ShowingActionDialog = true;
         },
-        onLeftAction: function(action){
-            window.console.log('Left action!')
-            window.console.log(action)
-            this.$emit('UserAction', {
-                Area: 'Left',
-                Action: action,
-            })
+        onExitFromRuleBook:function(){
+            window.console.log('MinimumDigitalTable.onExitFromRuleBook()');
+            this.ShowingRuleBook = false;
         },
-        onRightAction: function(action){
-            window.console.log('Right action!')
-            window.console.log(action)
-            this.$emit('UserAction', {
-                Area: 'Right',
-                Action: action,
-            })
+        onRuleBook:function(){
+            window.console.log('MinimumDigitalTable.onRuleBook()');
+            this.ShowingRuleBook = true;
+        },
+        onContrlSettings:function(){
+            window.console.log('MinimumDigitalTable.onContrlSettings()');
+            window.console.warn("onContrlSettings not implemented.");
+        },
+        onGameResultAvailable:function(){
+            window.console.log('MinimumDigitalTable.onGameResultAvailable()');
+            if (!this.ResultPrompted) {
+                this.ShowingResultDialog = true;
+                this.ResultPrompted = true;
+            }
+        },
+        onActionSelected:function(action){
+            window.console.log('MinimumDigitalTable.onActionSelected()');
+            window.console.log(action);
+            this.ShowingActionDialog = false;
+
+            axios.post(this.ApiServerPlayUrl, {
+                Action:'PerformGameAction',
+                GameID:this.GameID,
+                RoleID: this.RoleID,
+                Payload:action,
+            });
+        },
+        onActionCancelled:function(){
+            window.console.log('MinimumDigitalTable.onActionCancelled()');
+            this.ShowingActionDialog = false;
+        },
+        onResultDialogClosing: function(){
+            window.console.log('MinimumDigitalTable.onResultDialogClosing()');
+            this.ShowingResultDialog = false;
+        },
+        onClickShowScore:function(){
+            window.console.log('MinimumDigitalTable.onClickShowScore()');
+            this.ShowingResultDialog = true;
         },
     },
 }
 </script>
 
-<style>
+<style scoped>
+.GameStateMetadata {
+    text-align: center;
+}
+
+.ActionPanel {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    font-size: 0.5rem;
+}
+
+.BuiltSetContainer {
+    display: flex;
+    flex-direction: row-row-reverse;
+    justify-content: flex-end;
+}
+
+.SeatIndiContainer{
+    max-width:150px;
+}
+
 .PlayerName {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
-.GameMetadata {
-    text-align: center;
-}
-
 .OppoArea {
     transform: rotate(180deg);
+}
+
+.Area{
+    max-height: 250px;
 }
 
 .SeatIndicator {
@@ -229,16 +662,7 @@ export default {
     text-align: center;
 }
 
-#GameView {
-    font-size: 2rem;
-}
-
-.hand {
-    font-size: 1em;
-}
-
 .PlayerActions {
-    height: 30vh;
     overflow-y: scroll;
 }
 
@@ -246,7 +670,44 @@ export default {
     font-size: 2rem;
 }
 
-.TileOnlyContainer {
-    font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans",sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol","Noto Color Emoji";
+.lds-ring {
+    width: 100px;
+    height: 100px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.lds-ring div {
+    box-sizing: border-box;
+    display: block;
+    position: absolute;
+    width: 100px;
+    height: 100px;
+    margin: 8px;
+    border: 8px solid #fff;
+    border-radius: 50%;
+    animation: lds-ring 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+    border-color: #82b1ff transparent transparent transparent;
+}
+.lds-ring div:nth-child(1) {
+    animation-delay: -0.45s;
+}
+.lds-ring div:nth-child(2) {
+    animation-delay: -0.3s;
+}
+.lds-ring div:nth-child(3) {
+    animation-delay: -0.15s;
+}
+@keyframes lds-ring {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+#PendingView {
+    width:100%;
 }
 </style>
