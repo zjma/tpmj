@@ -6,11 +6,15 @@
             </v-card-title>
             <v-container v-if="HasWinner">
                 <HandAndSetView :ScaleRatio="0.8" :OldHand='OldHand' :NewHand='LastHand' :Set0='Set0' :Set1='Set1' :Set2='Set2' :Set3='Set3' />
-                <v-row v-for='(pattern,idx) in PatternUIData' :key='idx'><v-col class="PatternName">{{pattern.DisplayName}}</v-col><v-col class="PatternValue">{{pattern.DisplayValue}}</v-col></v-row>
+                <v-row v-for='(pattern,idx) in PatternUIData' :key='idx'>
+                    <v-col class="PatternName">{{pattern.DisplayName}}</v-col>
+                    <v-col class="PatternValue">{{pattern.DisplayValue}}</v-col>
+                </v-row>
                 <v-divider class="ma-4"/>
                 <v-row class="TotalValue">{{WinnerTotalValue}}</v-row>
             </v-container>
-            <v-container v-else></v-container>
+            <v-container v-else>
+            </v-container>
             <v-card-actions>
                 <v-spacer></v-spacer>
                 <v-btn color="blue darken-1" text large @click="onNext"><v-icon>mdi-check</v-icon></v-btn>
@@ -89,10 +93,17 @@ export default {
             return styling.getSetRowStr(gsv, seatID);
         },
         PatternUIData : function() {
+            window.console.log('PatternUIData calculating.');
             var gsv = this.gameStateView;
             var roleID = gsv.State.X;
             var seatID = Game2Utils.getSeatByRole(roleID);
-            return this.gameStateView.MatchedPatterns[seatID].map(pat => styling.getPatternUIData({Name:pat,Value:gsv.PatternValues[pat]}));
+            return this.gameStateView.MatchedPatterns[seatID].map(function(pid){
+                var val = gsv.PatternValues[pid];
+                return {
+                    DisplayName:Game2Utils.PatternLibrary[pid].Name,
+                    DisplayValue:`${val}番`,
+                };
+            });
         },
         WinnerTotalValue : function() {
             var gsv = this.gameStateView;

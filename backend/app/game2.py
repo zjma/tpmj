@@ -191,6 +191,9 @@ class GameState:
     def __init__(self, player0, player1):
         self._PatternValues = {
             'OneQuad':1,
+            'TwoQuads':2,
+            'ThreeQuads':3,
+            'FourQuads':4,
             'RedDragonTriplet':1,
             'GreenDragonTriplet':1,
             'WhiteDragonTriplet':1,
@@ -491,6 +494,15 @@ class GameState:
     def _checkOneQuad(self, seatID, handGroups):
         return len([set for set in self._builtSets[seatID] if set.isQuad()])==1
 
+    def _checkTwoQuads(self, seatID, handGroups):
+        return len([set for set in self._builtSets[seatID] if set.isQuad()])==2
+
+    def _checkThreeQuads(self, seatID, handGroups):
+        return len([set for set in self._builtSets[seatID] if set.isQuad()])==3
+
+    def _checkFourQuads(self, seatID, handGroups):
+        return len([set for set in self._builtSets[seatID] if set.isQuad()])==4
+
     def _checkRedDragonTriplet(self, seatID, handGroups):
         tileGroups = handGroups + [set.getTiles() for set in self._builtSets[seatID]]
         for tileGroup in tileGroups:
@@ -514,7 +526,7 @@ class GameState:
 
     def _checkAllTriplets(self, seatID, handGroups):
         tileGroups = handGroups + [set.getTiles() for set in self._builtSets[seatID]]
-        return len([0 for tileGroup in tileGroups if CheckTriplet(tileGroup)])==4
+        return len([0 for tileGroup in tileGroups if CheckTriplet(tileGroup) or CheckQuad(tileGroup)])==4
 
     def edit(self, request):
         logger.debug(f"Handling Edit request: {request}")
