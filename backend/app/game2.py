@@ -198,6 +198,7 @@ class GameState:
             'GreenDragonTriplet':1,
             'WhiteDragonTriplet':1,
             'AllTriplets':2,
+            'FullFlush':2,
         }
 
         self._playerNames = [player0, player1]
@@ -527,6 +528,25 @@ class GameState:
     def _checkAllTriplets(self, seatID, handGroups):
         tileGroups = handGroups + [set.getTiles() for set in self._builtSets[seatID]]
         return len([0 for tileGroup in tileGroups if CheckTriplet(tileGroup) or CheckQuad(tileGroup)])==4
+
+    def _checkFullFlush(self, seatID, handGroups):
+        logger.debug(f'checking FullFlush')
+        allTiles = []
+
+        for handGroup in handGroups:
+            allTiles += handGroup
+
+        for builtSet in self._builtSets[seatID]:
+            allTiles += builtSet.getTiles()
+
+        count = len(allTiles)
+        countMan = len([tile for tile in allTiles if tile//4 in range(0,9)])
+        countSou = len([tile for tile in allTiles if tile//4 in range(9,18)])
+        countPin = len([tile for tile in allTiles if tile//4 in range(18,27)])
+
+        logger.debug(f'count={count},countMan={countMan},countSout={countSou},countPin={countPin}')
+
+        return count in [countMan,countSou,countPin]
 
     def edit(self, request):
         logger.debug(f"Handling Edit request: {request}")
