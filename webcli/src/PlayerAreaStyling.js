@@ -82,6 +82,11 @@ export function getActionUIData(action) {
                 Type: '不要',
                 Data: action,
             }
+        case 'Pass':
+            return {
+                Type: '不要',
+                Data: action,
+            }
         case 'Discard':
             switch (action.Source) {
                 case 'NewHand':
