@@ -1,4 +1,4 @@
 export const Obj = {
-    asdf:6666,
+    asdf:66667,
     qwer:'zzzzzxcvvvv',
 };
