@@ -350,13 +350,10 @@ export function getTsumoActions(gameStateView, role) {
     return result;
 }
 
-export function getRonActions(gameStateView, role) {
+export function getRonActions(gameStateView, role, ronTid) {
     var seat = getSeatByRole(role);
-    var opposeat = getSeatByRole(1-role);
     var oldTids = gameStateView.AreaViews[seat].OldHand.map(v => getTidFromTileView(v)).filter(v => v!=undefined);
-    var oppoRiver = gameStateView.AreaViews[opposeat].River;
-    var discardedTid = getTidFromTileView(oppoRiver[oppoRiver.length-1]);
-    var tids = oldTids.concat([discardedTid]).filter(x => x!=undefined);
+    var tids = oldTids.concat([ronTid]).filter(x => x!=undefined);
     tids.sort((a, b) => a - b);
     var tgids = tids.map(tid => getTileGroupID(tid));
     var result = get3Xn2Solutions(tgids).map(function(gtidsol){
@@ -486,7 +483,6 @@ export function getKan2Actions(gameStateView, role) {
     var newHandTids = gameStateView.AreaViews[seatID].NewHand.map(v => getTidFromTileView(v));
     var tids = oldHandTids.concat(newHandTids);
     var handTgids = tids.map(tid => getTileGroupID(tid));
-
     return gameStateView.AreaViews[seatID].BuiltSets.map(function(setview){
         var tids = getTidListFromTileViewList(setview.TileViews);
         var tgid = getTripletTileGroupID(tids);
@@ -499,7 +495,7 @@ export function getKan2Actions(gameStateView, role) {
         return {
             Type : 'Kan2',
             Value: tids,
-            Preview: [getTidListFromTileViewList(tids)],
+            Preview: [getTileViewListByTids(tids)],
         };
     });
 }
@@ -530,6 +526,12 @@ export function getDrawActions() {
     }
 }
 
+export function getPassActions() {
+    return {
+        Type: 'Pass',
+    }
+}
+
 export function getAction(gameStateView, role) {
     var result = [];
 
@@ -544,11 +546,21 @@ export function getAction(gameStateView, role) {
     }
 
     if (gameStateView.State.Main == 'PlayerXToRespondToDiscard' && gameStateView.State.X == role) {
+        var opposeat = getSeatByRole(1-role);
+        var oppoRiver = gameStateView.AreaViews[opposeat].River;
+        var discardedTid = getTidFromTileView(oppoRiver[oppoRiver.length-1]);
         result = result.concat(getDrawActions());
-        result = result.concat(getRonActions(gameStateView, role));
+        result = result.concat(getRonActions(gameStateView, role, discardedTid));
         result = result.concat(getKan1Actions(gameStateView, role));
         result = result.concat(getPonActions(gameStateView, role));
         result = result.concat(getChiActions(gameStateView, role));
+        window.console.log(result);
+        return result;
+    }
+
+    if (gameStateView.State.Main == 'PlayerXToRespondToKan2' && gameStateView.State.X == role) {
+        result = result.concat(getPassActions());
+        result = result.concat(getRonActions(gameStateView, role, gameStateView.State.Kan2Tile));
         window.console.log(result);
         return result;
     }
@@ -570,6 +582,7 @@ export function getTotalPatternValue(gameStateView, seatID) {
 export const PatternLibrary = {
     WhiteDragonTriplet : {
         Name:'役牌·白',
+        Value:1,
         Desc:'和牌时，有白板的刻/杠。',
         Example:{
             OldHand:[
@@ -602,6 +615,7 @@ export const PatternLibrary = {
     },
     GreenDragonTriplet : {
         Name:'役牌·发',
+        Value:1,
         Desc:'和牌时，有发财的刻/杠。',
         Example:{
             OldHand:[
@@ -634,6 +648,7 @@ export const PatternLibrary = {
     },
     RedDragonTriplet : {
         Name:'役牌·中',
+        Value:1,
         Desc:'和牌时，有红中的刻/杠。',
         Example:{
             OldHand:[
@@ -666,6 +681,7 @@ export const PatternLibrary = {
     },
     OneQuad : {
         Name:'单杠',
+        Value:1,
         Desc:'和牌时，有1个杠。',
         Example:{
             OldHand:[
@@ -697,58 +713,70 @@ export const PatternLibrary = {
             ],
         },
     },
-    AllTriplets : {
-        Name:'对对和',
-        Desc:'和牌时，有4个刻/杠。',
+    IdenticalSequencesI : {
+        Name:'一般高',
+        Value:1,
+        Desc:'和牌时，有2个一样的顺子。',
         Example:{
             OldHand:[
-                {IsValueVisible:true,Value:40},
-                {IsValueVisible:true,Value:41},
-                {IsValueVisible:true,Value:42},
+                {IsValueVisible:true,Value:56},
+                {IsValueVisible:true,Value:60},
+                {IsValueVisible:true,Value:64},
+                {IsValueVisible:true,Value:68},
+                {IsValueVisible:true,Value:72},
+                {IsValueVisible:true,Value:76},
                 {IsValueVisible:true,Value:80},
             ],
             NewHand:[
+                {IsValueVisible:true,Value:69},
+            ],
+            Set0:[
+                {IsValueVisible:true,Value:5},
+                {IsValueVisible:true,Value:6},
+                {IsValueVisible:true,Value:7},
+            ],
+            Set1:[
+                {IsValueVisible:true,Value:73},
+                {IsValueVisible:true,Value:77},
                 {IsValueVisible:true,Value:81},
             ],
-            Set0:[
-                {IsValueVisible:true,Value:0},
-                {IsValueVisible:true,Value:1},
-                {IsValueVisible:true,Value:2},
+            Set2:[
             ],
-            Set1:[
-                {IsValueVisible:true,Value:60},
-                {IsValueVisible:true,Value:61},
-                {IsValueVisible:true,Value:62},
+            Set3:[
             ],
-            Set2:[],
-            Set3:[],
         },
     },
-    FullFlush : {
-        Name:'清一色',
-        Desc:'和牌时，所有牌都是万子/索子/筒子。',
+    Rinshan : {
+        Name:'杠上开花',
+        Value:1,
+        Desc:'开杠后从牌山尾部补的牌形成自摸。',
         Example:{
             OldHand:[
-                {IsValueVisible:true,Value:36},
-                {IsValueVisible:true,Value:37},
-                {IsValueVisible:true,Value:38},
-                {IsValueVisible:true,Value:40},
-                {IsValueVisible:true,Value:41},
-                {IsValueVisible:true,Value:42},
-                {IsValueVisible:true,Value:48},
             ],
             NewHand:[
-                {IsValueVisible:true,Value:49},
             ],
             Set0:[
-                {IsValueVisible:true,Value:50},
-                {IsValueVisible:true,Value:52},
-                {IsValueVisible:true,Value:56},
             ],
             Set1:[
-                {IsValueVisible:true,Value:57},
-                {IsValueVisible:true,Value:60},
-                {IsValueVisible:true,Value:64},
+            ],
+            Set2:[
+            ],
+            Set3:[
+            ],
+        },
+    },
+    RobKan : {
+        Name:'抢杠',
+        Value:1,
+        Desc:'和他人开小明杠的牌。',
+        Example:{
+            OldHand:[
+            ],
+            NewHand:[
+            ],
+            Set0:[
+            ],
+            Set1:[
             ],
             Set2:[
             ],
@@ -758,6 +786,7 @@ export const PatternLibrary = {
     },
     TwoQuads : {
         Name:'双杠',
+        Value:2,
         Desc:'和牌时，有2个杠。',
         Example:{
             OldHand:[
@@ -790,8 +819,136 @@ export const PatternLibrary = {
             ],
         },
     },
+    AllTriplets : {
+        Name:'对对和',
+        Value:2,
+        Desc:'和牌时，有4个刻/杠。',
+        Example:{
+            OldHand:[
+                {IsValueVisible:true,Value:40},
+                {IsValueVisible:true,Value:41},
+                {IsValueVisible:true,Value:42},
+                {IsValueVisible:true,Value:80},
+            ],
+            NewHand:[
+                {IsValueVisible:true,Value:81},
+            ],
+            Set0:[
+                {IsValueVisible:true,Value:0},
+                {IsValueVisible:true,Value:1},
+                {IsValueVisible:true,Value:2},
+            ],
+            Set1:[
+                {IsValueVisible:true,Value:60},
+                {IsValueVisible:true,Value:61},
+                {IsValueVisible:true,Value:62},
+            ],
+            Set2:[],
+            Set3:[],
+        },
+    },
+    FullFlush : {
+        Name:'清一色',
+        Value:2,
+        Desc:'和牌时，所有牌都是万子/索子/筒子。',
+        Example:{
+            OldHand:[
+                {IsValueVisible:true,Value:36},
+                {IsValueVisible:true,Value:37},
+                {IsValueVisible:true,Value:38},
+                {IsValueVisible:true,Value:40},
+                {IsValueVisible:true,Value:41},
+                {IsValueVisible:true,Value:42},
+                {IsValueVisible:true,Value:48},
+            ],
+            NewHand:[
+                {IsValueVisible:true,Value:49},
+            ],
+            Set0:[
+                {IsValueVisible:true,Value:50},
+                {IsValueVisible:true,Value:52},
+                {IsValueVisible:true,Value:56},
+            ],
+            Set1:[
+                {IsValueVisible:true,Value:57},
+                {IsValueVisible:true,Value:60},
+                {IsValueVisible:true,Value:64},
+            ],
+            Set2:[
+            ],
+            Set3:[
+            ],
+        },
+    },
+    IdenticalSequencesII : {
+        Name:'两般高',
+        Value:2,
+        Desc:'和牌时，有4个顺子，其中2个顺子一样，另外2个顺子也一样。不加计『一般高』。',
+        Example:{
+            OldHand:[
+                {IsValueVisible:true,Value:4},
+                {IsValueVisible:true,Value:8},
+                {IsValueVisible:true,Value:12},
+                {IsValueVisible:true,Value:68},
+                {IsValueVisible:true,Value:72},
+                {IsValueVisible:true,Value:76},
+                {IsValueVisible:true,Value:80},
+            ],
+            NewHand:[
+                {IsValueVisible:true,Value:69},
+            ],
+            Set0:[
+                {IsValueVisible:true,Value:5},
+                {IsValueVisible:true,Value:9},
+                {IsValueVisible:true,Value:13},
+            ],
+            Set1:[
+                {IsValueVisible:true,Value:73},
+                {IsValueVisible:true,Value:77},
+                {IsValueVisible:true,Value:81},
+            ],
+            Set2:[
+            ],
+            Set3:[
+            ],
+        },
+    },
+    Straight : {
+        Name:'一气通贯',
+        Value:2,
+        Desc:'和牌时，有同种花色的123,456,789的顺子。',
+        Example:{
+            OldHand:[
+                {IsValueVisible:true,Value:0},
+                {IsValueVisible:true,Value:1},
+                {IsValueVisible:true,Value:4},
+                {IsValueVisible:true,Value:5},
+                {IsValueVisible:true,Value:6},
+                {IsValueVisible:true,Value:48},
+                {IsValueVisible:true,Value:52},
+                {IsValueVisible:true,Value:56},
+                {IsValueVisible:true,Value:60},
+                {IsValueVisible:true,Value:68},
+            ],
+            NewHand:[
+                {IsValueVisible:true,Value:64},
+            ],
+            Set0:[
+                {IsValueVisible:true,Value:36},
+                {IsValueVisible:true,Value:40},
+                {IsValueVisible:true,Value:44},
+            ],
+            Set1:[
+            ],
+            Set2:[
+            ],
+            Set3:[
+            ],
+        },
+    },
     ThreeQuads : {
         Name:'三杠子',
+        Value:3,
         Desc:'和牌时，有3个杠。',
         Example:{
             OldHand:[
@@ -825,8 +982,42 @@ export const PatternLibrary = {
             ],
         },
     },
+    IdenticalSequencesIII : {
+        Name:'一色三同顺',
+        Value:3,
+        Desc:'和牌时，有3个一样的顺子。不加计『一般高』。',
+        Example:{
+            OldHand:[
+                {IsValueVisible:true,Value:4},
+                {IsValueVisible:true,Value:8},
+                {IsValueVisible:true,Value:12},
+                {IsValueVisible:true,Value:68},
+                {IsValueVisible:true,Value:72},
+                {IsValueVisible:true,Value:76},
+                {IsValueVisible:true,Value:80},
+            ],
+            NewHand:[
+                {IsValueVisible:true,Value:69},
+            ],
+            Set0:[
+                {IsValueVisible:true,Value:74},
+                {IsValueVisible:true,Value:78},
+                {IsValueVisible:true,Value:82},
+            ],
+            Set1:[
+                {IsValueVisible:true,Value:73},
+                {IsValueVisible:true,Value:77},
+                {IsValueVisible:true,Value:81},
+            ],
+            Set2:[
+            ],
+            Set3:[
+            ],
+        },
+    },
     FourQuads : {
         Name:'四杠子',
+        Value:4,
         Desc:'和牌时，有4个杠。注：此时一定满足对对和。',
         Example:{
             OldHand:[
@@ -858,6 +1049,39 @@ export const PatternLibrary = {
                 {IsValueVisible:true,Value:60},
                 {IsValueVisible:true,Value:62},
                 {IsValueVisible:true,Value:63},
+            ],
+        },
+    },
+    IdenticalSequencesIV : {
+        Name:'一色四同顺',
+        Value:6,
+        Desc:'和牌时，有4个一样的顺子。不加计『一般高』『两般高』『一色三同顺』。',
+        Example:{
+            OldHand:[
+                {IsValueVisible:true,Value:0},
+                {IsValueVisible:true,Value:72},
+                {IsValueVisible:true,Value:75},
+                {IsValueVisible:true,Value:76},
+                {IsValueVisible:true,Value:79},
+                {IsValueVisible:true,Value:80},
+                {IsValueVisible:true,Value:83},
+            ],
+            NewHand:[
+                {IsValueVisible:true,Value:1},
+            ],
+            Set0:[
+                {IsValueVisible:true,Value:74},
+                {IsValueVisible:true,Value:78},
+                {IsValueVisible:true,Value:82},
+            ],
+            Set1:[
+                {IsValueVisible:true,Value:73},
+                {IsValueVisible:true,Value:77},
+                {IsValueVisible:true,Value:81},
+            ],
+            Set2:[
+            ],
+            Set3:[
             ],
         },
     },
