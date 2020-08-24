@@ -70,11 +70,12 @@
             <v-btn text small :disabled='!IsGameResultAvailable' @click='onClickGameResultButton'>本局得点</v-btn>
             <v-spacer/>
             <v-btn text small @click="onRuleBook">番种表</v-btn>
-            <v-btn text small @click="onControlSettings">设置</v-btn>
+            <v-btn text small @click="onOpeningSettings">设置</v-btn>
         </v-footer>
         <result-dialog :active="ShowingResultDialog" :gameStateView='gameStateView' @done="onResultDialogClosing"></result-dialog>
         <rulebook-dialog :active="ShowingRuleBook" :content="ruleBookContent" @done="onExitFromRuleBook"></rulebook-dialog>
-        <!-- <control-settings-dialog :active="ShowingControlSettingsDialog" :ControlSettings='ControlSettings' @done="onExitFromControlSettingsDialog"></control-settings-dialog> -->
+        <settings-dialog :active="ShowingSettingsDialog" :InitialSettings='Settings' @updated="onNewSettings" @done="onExitFromSettingsDialog"></settings-dialog>
+        <audio src="" id="BGM"></audio>
     </v-container>
 </template>
 
@@ -84,17 +85,18 @@ import * as Game2Utils from './game2.js';
 import * as styling from './PlayerAreaStyling.js';
 import GameResultDialog from './GameResultDialog.vue';
 import RuleBookDialog from './RuleBookDialog.vue';
-// import ControlSettingsDialog from './ControlSettingsDialog.vue';
+import MinimumDigitalTableSettingsDialog from './MinimumDigitalTableSettingsDialog.vue';
 import TileViewRow from './TileViewRow.vue';
 import HandAndSetView from './HandAndSetView.vue';
 import * as SoundPlayer from './SoundPlayer.js';
+import BGM from './assets/sound/pinball.mp3';
 
 export default {
     name : 'MinimumDigitalTable',
     components : {
         'result-dialog' : GameResultDialog,
         'rulebook-dialog': RuleBookDialog,
-        // 'control-settings-dialog': ControlSettingsDialog,
+        'settings-dialog': MinimumDigitalTableSettingsDialog,
         'TileViewRow' : TileViewRow,
         'HandAndSetView' : HandAndSetView,
     },
@@ -113,11 +115,12 @@ export default {
             ShowingResultDialog : false,
             ResultPrompted : false,
             ShowingRuleBook : false,
-            ShowingControlSettingsDialog : false,
+            ShowingSettingsDialog : false,
             ruleBookContent : Game2Utils.PatternLibrary,
-            AutoPass: true,
-            ControlSettings : {
-                AutoPassTimeLimitInSeconds : 0,
+            Settings : {
+                AutoSkip : true,//Auto-skip when current player needs to respond to other player's discard/Kan2 and the only possible move is to skip.
+                BgmOn : true,
+                SoundEffectOn : true,
             },
             ManualActionRequired : true,
         };
@@ -139,7 +142,7 @@ export default {
                 case 'PlayerXToRespondToDiscard':
                     if (this.gameStateView.State.X==this.RoleID){
                         if (this.ManualActionRequired) {
-                            return '对手的弃牌! 如何应对?';
+                            return '对手的弃牌! 要怎么做?';
                         } else {
                             return '对手的弃牌!';
                         }
@@ -255,6 +258,9 @@ export default {
         window.console.log("[MinimumDigitalTable].mounted()");
         const self = this;
 
+        document.getElementById('BGM').setAttribute('src', BGM);
+        document.getElementById('BGM').setAttribute('loop', true);
+
         setInterval(function(){
             if (!self.active) return;
 
@@ -299,16 +305,21 @@ export default {
                                 SoundPlayer.play('Ron');
                             }
                             self.ManualActionRequired = true;
-                            if ((sub.State.Main=='PlayerXToRespondToDiscard'||sub.State.Main=='PlayerXToRespondToKan2')&&sub.State.X==self.RoleID) {
-                                var actions = Game2Utils.getAction(sub, self.RoleID);
-                                if (actions.length==1 && (actions[0].Type=='Pass'||actions[0].Type=='Draw')) {
-                                    self.onActionSelected(actions[0]);
-                                    self.ManualActionRequired = false;
+                            if (self.Settings.AutoSkip){
+                                if ((sub.State.Main=='PlayerXToRespondToDiscard'||sub.State.Main=='PlayerXToRespondToKan2')&&sub.State.X==self.RoleID) {
+                                    var actions = Game2Utils.getAction(sub, self.RoleID);
+                                    if (actions.length==1 && (actions[0].Type=='Pass'||actions[0].Type=='Draw')) {
+                                        self.onActionSelected(actions[0]);
+                                        self.ManualActionRequired = false;
+                                    }
                                 }
                             }
                         }
 
                         self.gameStateView = sub;
+                        if (!self.isGameStateViewValid) {
+                            self.startBGM();
+                        }
                         self.isGameStateViewValid = true;
 
                         if (sub.State.Main=='PlayerXWon' || sub.State.Main=='Finished') {
@@ -326,6 +337,7 @@ export default {
         onClickReturnToLobby(){
             window.console.log('MinimumDigitalTable.onClickReturnToLobby()');
             this.$emit('Exit');
+            this.stopBGM();
             SoundPlayer.play('NormalAction');
         },
         onClickGameResultButton(){
@@ -343,14 +355,25 @@ export default {
             this.ShowingRuleBook = true;
             SoundPlayer.play('NormalAction');
         },
-        onExitFromControlSettingsDialog:function(){
-            window.console.log('MinimumDigitalTable.onExitFromControlSettingsDialog()');
-            this.ShowingControlSettingsDialog = false;
+        onExitFromSettingsDialog:function(){
+            window.console.log('MinimumDigitalTable.onExitFromSettingsDialog()');
+            this.ShowingSettingsDialog = false;
             SoundPlayer.play('NormalAction');
         },
-        onControlSettings:function(){
-            window.console.log('MinimumDigitalTable.onControlSettings()');
-            this.ShowingControlSettingsDialog = true;
+        onNewSettings:function(newSettings){
+            window.console.log('MinimumDigitalTable.onNewSettings()');
+            window.console.log(newSettings);
+            if (newSettings.BgmOn==true&&this.Settings.BgmOn==false){
+                this.startBGM();
+            }
+            if (newSettings.BgmOn==false&&this.Settings.BgmOn==true){
+                this.stopBGM();
+            }
+            this.Settings = newSettings;
+        },
+        onOpeningSettings:function(){
+            window.console.log('MinimumDigitalTable.onOpeningSettings()');
+            this.ShowingSettingsDialog = true;
             SoundPlayer.play('NormalAction');
         },
         onGameResultAvailable:function(){
@@ -378,6 +401,12 @@ export default {
         onClickShowScore:function(){
             window.console.log('MinimumDigitalTable.onClickShowScore()');
             this.ShowingResultDialog = true;
+        },
+        startBGM:function(){
+            document.getElementById('BGM').play();
+        },
+        stopBGM:function(){
+            document.getElementById('BGM').pause();
         }
     },
 }

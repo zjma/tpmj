@@ -918,7 +918,7 @@ export const PatternLibrary = {
     AllMelding: {
         Name:'全求人',
         Value:1,
-        Desc:'4副面子都靠吃/碰/大明杠/加杠完成，由他人点炮和牌。',
+        Desc:'4副面子都靠吃/碰/大明杠/加杠完成，由他人点炮和牌。（注：不能暗杠。）',
         Example:{
             OldHand:[
             ],
