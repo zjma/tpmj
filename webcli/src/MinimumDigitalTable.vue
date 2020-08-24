@@ -179,8 +179,7 @@ export default {
             return styling.getSeatChar(this.RoleID)
         },
         MountainRemaining: function(){
-            var accumulator = (accumulated, toProcess) => toProcess.Mountain.filter(v => v!=undefined).length + accumulated
-            return this.gameStateView.AreaViews.reduce(accumulator, 0)
+            return Game2Utils.getMountainRemainingCount(this.gameStateView);
         },
         SelfName: function(){
             return this.gameStateView.PlayerNames[this.RoleID]

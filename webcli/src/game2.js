@@ -81,6 +81,11 @@ export function getRandomMountain(){
     return Array(leftGapCount).concat(tileViews).concat(Array(rightGapCount))
 }
 
+export function getMountainRemainingCount(gameStateView) {
+    var accumulator = (accumulated, toProcess) => toProcess.Mountain.filter(v => v!=undefined).length + accumulated;
+    return gameStateView.AreaViews.reduce(accumulator, 0);
+}
+
 export function randAreaData() {
     // var setCount = Utils.randInt(0, 5)
     return {
@@ -435,6 +440,7 @@ export function getChiActions(gameStateView, role) {
 }
 
 export function getKan0Actions(gameStateView, role) {
+    if (getMountainRemainingCount(gameStateView)==0) return [];
     var seatID = getSeatByRole(role);
     var oldHandTids = gameStateView.AreaViews[seatID].OldHand.map(v => getTidFromTileView(v));
     var newHandTids = gameStateView.AreaViews[seatID].NewHand.map(v => getTidFromTileView(v));
@@ -456,6 +462,7 @@ export function getKan0Actions(gameStateView, role) {
 }
 
 export function getKan1Actions(gameStateView, role) {
+    if (getMountainRemainingCount(gameStateView)==0) return [];
     var seat = getSeatByRole(role);
     var opposeat = getSeatByRole(1-role);
     var oldTids = gameStateView.AreaViews[seat].OldHand.map(v => getTidFromTileView(v)).filter(v => v!=undefined);
@@ -478,6 +485,7 @@ export function getKan1Actions(gameStateView, role) {
 }
 
 export function getKan2Actions(gameStateView, role) {
+    if (getMountainRemainingCount(gameStateView)==0) return [];
     var seatID = getSeatByRole(role);
     var oldHandTids = gameStateView.AreaViews[seatID].OldHand.map(v => getTidFromTileView(v));
     var newHandTids = gameStateView.AreaViews[seatID].NewHand.map(v => getTidFromTileView(v));
