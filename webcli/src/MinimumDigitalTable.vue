@@ -319,6 +319,7 @@ export default {
                         self.gameStateView = sub;
                         if (!self.isGameStateViewValid) {
                             self.startBGM();
+                            SoundPlayer.play('GameStarted');
                         }
                         self.isGameStateViewValid = true;
 
