@@ -85,6 +85,7 @@ import GameResultDialog from './GameResultDialog.vue';
 import RuleBookDialog from './RuleBookDialog.vue';
 import TileViewRow from './TileViewRow.vue';
 import HandAndSetView from './HandAndSetView.vue';
+import * as SoundPlayer from './SoundPlayer.js';
 
 export default {
     name : 'MinimumDigitalTable',
@@ -256,6 +257,30 @@ export default {
                     self.QueryPending = false;
                     var sub = response.data;
                     if (self.active) {
+                        window.console.log(`[0823]SequenceNumber=${sub.SequenceNumber},LastAction=${sub.LastAction.Main}`);
+                        if (self.gameStateView.SequenceNumber != sub.SequenceNumber) {
+                            if (sub.LastAction.Main=='PlayerXDraw') {
+                                SoundPlayer.play('DrewTile');
+                            } else if (sub.LastAction.Main=='PlayerXDiscardNew') {
+                                SoundPlayer.play('DiscardedNew');
+                            } else if (sub.LastAction.Main=='PlayerXDiscardOld') {
+                                SoundPlayer.play('DiscardedOld');
+                            } else if (sub.LastAction.Main=='PlayerXPon') {
+                                SoundPlayer.play('Pon');
+                            } else if (sub.LastAction.Main=='PlayerXChi') {
+                                SoundPlayer.play('Chi');
+                            } else if (sub.LastAction.Main=='PlayerXKan0') {
+                                SoundPlayer.play('Kan');
+                            } else if (sub.LastAction.Main=='PlayerXKan1') {
+                                SoundPlayer.play('Kan');
+                            } else if (sub.LastAction.Main=='PlayerXKan2') {
+                                SoundPlayer.play('Kan');
+                            } else if (sub.LastAction.Main=='PlayerXTsumo') {
+                                SoundPlayer.play('Tsumo');
+                            } else if (sub.LastAction.Main=='PlayerXRon') {
+                                SoundPlayer.play('Ron');
+                            }
+                        }
                         self.gameStateView = sub;
                         self.isGameStateViewValid = true;
                         if (sub.State.Main=='PlayerXWon' || sub.State.Main=='Finished') {
@@ -273,26 +298,27 @@ export default {
         onClickReturnToLobby(){
             window.console.log('MinimumDigitalTable.onClickReturnToLobby()');
             this.$emit('Exit');
+            SoundPlayer.play('NormalAction');
         },
         onClickGameResultButton(){
             window.console.log('MinimumDigitalTable.onClickGameResultButton()');
             this.ShowingResultDialog = true;
-        },
-        onClickMyTurn:function(){
-            window.console.log('MinimumDigitalTable.onClickMyTurn()');
-            this.ShowingActionDialog = true;
+            SoundPlayer.play('NormalAction');
         },
         onExitFromRuleBook:function(){
             window.console.log('MinimumDigitalTable.onExitFromRuleBook()');
             this.ShowingRuleBook = false;
+            SoundPlayer.play('NormalAction');
         },
         onRuleBook:function(){
             window.console.log('MinimumDigitalTable.onRuleBook()');
             this.ShowingRuleBook = true;
+            SoundPlayer.play('NormalAction');
         },
         onContrlSettings:function(){
             window.console.log('MinimumDigitalTable.onContrlSettings()');
             window.console.warn("onContrlSettings not implemented.");
+            SoundPlayer.play('NormalAction');
         },
         onGameResultAvailable:function(){
             window.console.log('MinimumDigitalTable.onGameResultAvailable()');
@@ -324,7 +350,7 @@ export default {
         onClickShowScore:function(){
             window.console.log('MinimumDigitalTable.onClickShowScore()');
             this.ShowingResultDialog = true;
-        },
+        }
     },
 }
 </script>

@@ -25,15 +25,16 @@
             <admin-monitoring-table v-if="IsAdminMonitoring" :active="IsAdminMonitoring" :GameID="MonitoringGameID"/>
             <minimum-digital-table v-if="State=='Playing'" :active="State=='Playing'" :GameID="GameID" :RoleID="MyRole" @Exit="onPlayerLeavingGameRoom"/>
         </v-content>
+        <audio src="" id="SoundPlayer"></audio>
     </v-app>
 </template>
 
 <script>
-import {uuid} from 'vue-uuid'
-import Vue from 'vue'
-import axios from 'axios'
-import VueAxios from 'vue-axios'
-Vue.use(VueAxios, axios)
+import {uuid} from 'vue-uuid';
+import Vue from 'vue';
+import axios from 'axios';
+import VueAxios from 'vue-axios';
+Vue.use(VueAxios, axios);
 
 import * as Game2Util from './game2.js';
 import LoginDialog from './LoginDialog.vue';
@@ -43,6 +44,7 @@ import PlayerWaitingDialog from './PlayerWaitingDialog.vue';
 import MinimumDigitalTable from './MinimumDigitalTable.vue';
 import AdminMonitoringTable from './AdminMonitoringTable.vue';
 import ChooseGameDialog from './ChooseGameDialog.vue';
+import * as SoundPlayer from './SoundPlayer.js';
 
 export default {
     name: 'App',
@@ -136,6 +138,7 @@ export default {
         onPlayModeSelected : function(){
             this.mode = 'Play'
             this.State = 'PlayerWaitingForGame'
+            SoundPlayer.play('NormalAction');
         },
         onObserveModeSelected : function(){
             this.mode = 'Observe'
@@ -145,12 +148,13 @@ export default {
             this.State = 'UserLoggingIn'
         },
         onLoginFinished(userName){
-            window.console.log(userName)
-            this.UserName = userName
+            window.console.log(userName);
+            this.UserName = userName;
             if (userName=='admin') {
                 this.State = 'AdminChoosingGameToMonitor';
             } else {
-                this.State = 'UserSelectingMode'
+                this.State = 'UserSelectingMode';
+                SoundPlayer.play('NormalAction');
             }
         },
         onObserverWaitingCancelled(){
@@ -168,6 +172,7 @@ export default {
             this.RoleID = params.RoleID;
             this.MyRole = params.RoleID;
             this.State = 'Playing';
+            SoundPlayer.play('Attention');
         },
         onGameResultConfirmed(){
             window.console.log("Game result confirmed.");
