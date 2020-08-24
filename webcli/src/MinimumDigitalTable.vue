@@ -299,11 +299,9 @@ export default {
                             } else if (sub.LastAction.Main=='PlayerXRon') {
                                 SoundPlayer.play('Ron');
                             }
-                            window.console.log(`[0823] CurrentState=${sub.State.Main},X=${sub.State.X},thisRole=${self.RoleID}`);
                             self.ManualActionRequired = true;
                             if ((sub.State.Main=='PlayerXToRespondToDiscard'||sub.State.Main=='PlayerXToRespondToKan2')&&sub.State.X==self.RoleID) {
                                 var actions = Game2Utils.getAction(sub, self.RoleID);
-                                window.console.log(`[0823]actionCount=${actions.length}`);
                                 if (actions.length==1 && (actions[0].Type=='Pass'||actions[0].Type=='Draw')) {
                                     self.onActionSelected(actions[0]);
                                     self.ManualActionRequired = false;
