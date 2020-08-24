@@ -75,8 +75,6 @@ export default {
                         self.RoleID = sub.Role;
                         self.Nextable = true;
                         self.Countdown = 9;
-                    } else {
-                        self.Nextable = false;
                     }
                 }).catch(function(error){
                     self.QueryPending = false;
@@ -109,6 +107,7 @@ export default {
         resetState(){
             this.GameID = null;
             this.RoleID = null;
+            this.Nextable = false;
         }
     }
 }
