@@ -51,7 +51,7 @@
                 <v-list two-line v-if='IsGameActive' max-height=300>
                     <v-subheader class="typewriter">{{ActionListTitle}}</v-subheader>
                     <v-list-item v-for='(action,idx) in ActionUiData' :key='idx' @click="onActionSelected(action.Data)">
-                        <v-list-item-content>
+                        <v-list-item-content class="ActionItem" :style="'--animation-order: '+idx+';'">
                             <div class='d-flex PreviewContainer'>
                                 <TileViewRow v-for='(row,idx) in action.Preview' :key='`preview-${idx}`' :TileViews='row' />
                             </div>
@@ -111,6 +111,8 @@ export default {
             QueryPending : false,
             ApiServerPlayUrl : `${process.env.VUE_APP_API_SERVER_URL}/tpmj`,
             gameStateView : Game2Utils.randGameStateView(),
+            Actions : [],
+            ActionUiData: [],
             isGameStateViewValid : false,
             ShowingResultDialog : false,
             ResultPrompted : false,
@@ -122,7 +124,6 @@ export default {
                 BgmOn : true,
                 SoundEffectOn : true,
             },
-            ManualActionRequired : true,
         };
     },
     computed: {
@@ -141,20 +142,20 @@ export default {
                     }
                 case 'PlayerXToRespondToDiscard':
                     if (this.gameStateView.State.X==this.RoleID){
-                        if (this.ManualActionRequired) {
-                            return '对手的弃牌! 要怎么做?';
-                        } else {
+                        if (this.ActionUiData.length == 0) {
                             return '对手的弃牌!';
+                        } else {
+                            return '对手的弃牌! 要怎么做?';
                         }
                     }else{
                         return `${this.gameStateView.PlayerNames[this.gameStateView.State.X]}思考中...`;
                     }
                 case 'PlayerXToRespondToKan2':
                     if (this.gameStateView.State.X==this.RoleID){
-                        if (this.ManualActionRequired) {
-                            return '啊! 这个加杠! 抢杠吗?'
-                        } else {
+                        if (this.ActionUiData.length == 0) {
                             return '啊! 这个加杠!'
+                        } else {
+                            return '啊! 这个加杠! 抢杠吗?'
                         }
                     }else{
                         return `${this.gameStateView.PlayerNames[this.gameStateView.State.X]}思考中...`;
@@ -243,16 +244,16 @@ export default {
             var set = this.gameStateView.AreaViews[this.oppoSeat].BuiltSets[3];
             return (set) ? set.TileViews : [];
         },
-        ActionUiData: function(){
-            window.console.log('MinimumDigitalTable.ActionUiData()');
-            if (this.ManualActionRequired) {
-                var actions = Game2Utils.getAction(this.gameStateView, this.RoleID);
-                var result = actions.map(a => styling.getActionUIData(a));
-                return result;
-            } else {
-                return [];
-            }
-        },
+        // ActionUiData: function(){
+        //     window.console.log('MinimumDigitalTable.ActionUiData()');
+        //     if (this.ManualActionRequired) {
+        //         var actions = Game2Utils.getAction(this.gameStateView, this.RoleID);
+        //         var result = actions.map(a => styling.getActionUIData(a));
+        //         return result;
+        //     } else {
+        //         return [];
+        //     }
+        // },
     },
     mounted: function(){
         window.console.log("[MinimumDigitalTable].mounted()");
@@ -304,14 +305,16 @@ export default {
                             } else if (sub.LastAction.Main=='PlayerXRon') {
                                 SoundPlayer.play('Ron');
                             }
-                            self.ManualActionRequired = true;
+                            self.Actions = Game2Utils.getAction(sub, self.RoleID);
+                            self.ActionUiData = self.Actions.map(a => styling.getActionUIData(a));
                             if (self.Settings.AutoSkip){
-                                if ((sub.State.Main=='PlayerXToRespondToDiscard'||sub.State.Main=='PlayerXToRespondToKan2')&&sub.State.X==self.RoleID) {
-                                    var actions = Game2Utils.getAction(sub, self.RoleID);
-                                    if (actions.length==1 && (actions[0].Type=='Pass'||actions[0].Type=='Draw')) {
-                                        self.onActionSelected(actions[0]);
-                                        self.ManualActionRequired = false;
-                                    }
+                                if ((sub.State.Main=='PlayerXToRespondToDiscard' || sub.State.Main=='PlayerXToRespondToKan2')
+                                        && sub.State.X==self.RoleID
+                                        && self.Actions.length==1
+                                        && (self.Actions[0].Type=='Pass' || self.Actions[0].Type=='Draw'))
+                                {
+                                    self.onActionSelected(self.Actions[0]);
+                                    self.ActionUiData = [];
                                 }
                             }
                         }
@@ -501,5 +504,21 @@ export default {
 
 #PendingView {
     width:100%;
+}
+
+
+.ActionItem  {
+    animation: slide calc(500ms + var(--animation-order) * 100ms) forwards;
+    /* animation-delay: calc(var(--animation-order) * 1000ms); */
+}
+
+@keyframes slide {
+  from {
+    transform: translateX(100%);
+  }
+
+  to {
+    transform: translateX(0%);
+  }
 }
 </style>

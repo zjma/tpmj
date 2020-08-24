@@ -1,13 +1,12 @@
 <template>
     <v-app>
-        <v-app-bar app color="indigo" dark>
+        <!-- <v-app-bar app color="indigo" dark>
             索子麻雀练习
             <v-spacer/>
             <v-bottom-sheet>
                 <template v-slot:activator="{ on }">
                     <v-btn dark v-on="on" text>
                         版本与运行状态
-                        <!-- <v-icon>mdi-access-point</v-icon> -->
                     </v-btn>
               </template>
               <v-sheet height="200px">
@@ -15,7 +14,7 @@
                   <div>ApiServerVersion={{ApiServerVersion}}</div>
               </v-sheet>
             </v-bottom-sheet>
-        </v-app-bar>
+        </v-app-bar> -->
         <v-content>
             <login-dialog :active="IsLoginDialogActive" :default-user-name="UserName" @finished="onLoginFinished" />
             <choose-game-dialog :active="IsGameListDialogActive" @cancelled="onGameSelectionCancelled" @selected="onGameSelected($event)"/>
