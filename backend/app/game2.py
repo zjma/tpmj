@@ -168,6 +168,7 @@ class Set:
     def tiles(self): return self._tiles
 class GameState:
     def __init__(self, player0, player1):
+        self._sequenceNumber = 0
         self._PatternValues = {
             'OneQuad':1,
             'TwoQuads':2,
@@ -211,6 +212,7 @@ class GameState:
             'Main'  : 'PlayerXHandleDraw',
             'X'     : 0,
         }
+        self._lastAction = 'GameInitialize'
     def getStateView(self, role):
         return {
             'AreaViews' : [
@@ -224,11 +226,15 @@ class GameState:
             'PlayerNames' : self._playerNames,
             'PatternValues':self._PatternValues,
             'MatchedPatterns':self._matchedPatterns,
+            'SequenceNumber':self._sequenceNumber,
+            'LastAction':self._lastAction,
         }
 
-    def _setNewState(self, newState):
+    def _setNewState(self, **kwargs):
         self._previousState = self._state
-        self._state = newState
+        self._lastAction = kwargs['LastAction']
+        self._state = kwargs['NewState']
+        self._sequenceNumber+=1
     def _getMountainViewBySeatID(self, seatID, role):
         if role==-1 or self._state['Main'] in ('PlayerXWon','Finished'):
             return [({'IsValueVisible':True,'Value':tid} if tid!=None else None) for tid in self._mountain.getTilesBySeatID(seatID)]
@@ -276,7 +282,8 @@ class GameState:
                             fromOldHand = src=='OldHand'
                             self._discardFromHandToRiver(seatID,fromOldHand,tid)
                             self._organizeHand(seatID)
-                            self._state = {'Main':'PlayerXToRespondToDiscard','X':1-role}
+                            action = {'Main':'PlayerXDiscardOld','X':role} if fromOldHand else {'Main':'PlayerXDiscardNew','X':role}
+                            self._setNewState(LastAction=action, NewState={'Main':'PlayerXToRespondToDiscard','X':1-role})
                             return True
                     if actionType=='Tsumo':
                         val = action.get('Value', [])
@@ -295,7 +302,7 @@ class GameState:
                         sets = [0 for grp in val if CheckTriplet(grp) or CheckSequence(grp)]
                         logger.debug(f'sets={sets}')
                         if len(sets) != len(val)-1: return False
-                        self._setNewState({'Main':'PlayerXWon','X':role,'LastTile':self._newHand[seatID][-1]})
+                        self._setNewState(LastAction={'Main':'PlayerXTsumo','X':role}, NewState={'Main':'PlayerXWon','X':role,'LastTile':self._newHand[seatID][-1]})
                         self._updateMatchedPatterns(seatID, val)
                         return True
                     if actionType=='Kan0':
@@ -313,7 +320,7 @@ class GameState:
                         self._buildSet(seatID, sorted(tids))
                         self._organizeHand(seatID)
                         self._drawTile(seatID)
-                        self._setNewState({'Main':'PlayerXHandleDraw', 'X':role, 'IsKanDraw':True})
+                        self._setNewState(LastAction={'Main':'PlayerXKan0','X':role},NewState={'Main':'PlayerXHandleDraw', 'X':role, 'IsKanDraw':True})
                         return True
                     if actionType=='Kan2':
                         tids = action.get('Value',None)
@@ -341,9 +348,7 @@ class GameState:
                         self._removeTile(tidToAddToSet)
                         self._builtSets[seatID][sid].addTile(tidToAddToSet)
                         self._organizeHand(seatID)
-                        self._setNewState({'Main':'PlayerXToRespondToKan2', 'X':1-role, 'Kan2Tile':tidToAddToSet})
-                        # self._drawTile(seatID)
-                        # self._setNewState({'Main':'PlayerXHandleDraw', 'X':role, 'IsKanDraw':True})
+                        self._setNewState(LastAction={'Main':'PlayerXKan2','X':role},NewState={'Main':'PlayerXToRespondToKan2', 'X':1-role, 'Kan2Tile':tidToAddToSet})
                         return True
             elif mainState == 'PlayerXToRespondToDiscard':
                 if role==self._state.get('X',None):
@@ -354,9 +359,9 @@ class GameState:
                     if actionType=='Draw':
                         if len(self._mountain)>=1:
                             self._drawTile(seatID)
-                            self._setNewState({'Main':'PlayerXHandleDraw','X':role})
+                            self._setNewState(LastAction={'Main':'PlayerXDraw','X':role}, NewState={'Main':'PlayerXHandleDraw','X':role})
                         else:
-                            self._setNewState({'Main':'Finished'})
+                            self._setNewState(LastAction={'Main':'PlayerXPass','X':role}, NewState={'Main':'Finished'})
                         return True
                     elif actionType=='Pon':
                         tids = action.get('Value', [])
@@ -371,7 +376,7 @@ class GameState:
                         if len(tidSet&oldHandSet)!=2: return False
                         #All checks pass.
                         self._buildSet(seatID, sorted(tids))
-                        self._setNewState({'Main':'PlayerXHandleDraw', 'X':role})
+                        self._setNewState(LastAction={'Main':'PlayerXPon','X':role}, NewState={'Main':'PlayerXHandleDraw','X':role})
                         return True
                     elif actionType=='Chi':
                         tids = action.get('Value', [])
@@ -386,7 +391,7 @@ class GameState:
                         if len(tidSet&oldHandSet)!=2: return False
                         #All checks pass.
                         self._buildSet(seatID, sorted(tids))
-                        self._setNewState({'Main':'PlayerXHandleDraw', 'X':role})
+                        self._setNewState(LastAction={'Main':'PlayerXChi', 'X':role}, NewState={'Main':'PlayerXHandleDraw', 'X':role})
                         return True
                     elif actionType=='Ron':
                         val = action.get('Value', [])
@@ -406,7 +411,7 @@ class GameState:
                         logger.debug(f'sets={sets}')
                         if len(sets) != len(val)-1: return False
 
-                        self._setNewState({'Main':'PlayerXWon','X':role,'LastTile':self._river[oppoSeatID][-1]})
+                        self._setNewState(LastAction={'Main':'PlayerXRon', 'X':role}, NewState={'Main':'PlayerXWon','X':role,'LastTile':self._river[oppoSeatID][-1]})
                         self._updateMatchedPatterns(seatID,val)
                         return True
                     elif actionType=='Kan1':
@@ -425,7 +430,7 @@ class GameState:
                         #All checks pass.
                         self._buildSet(seatID, sorted(tids))
                         self._drawTile(seatID)
-                        self._setNewState({'Main':'PlayerXHandleDraw', 'X':role, 'IsKanDraw':True})
+                        self._setNewState(LastAction={'Main':'PlayerXKan1', 'X':role}, NewState={'Main':'PlayerXHandleDraw', 'X':role, 'IsKanDraw':True})
                         return True
             elif mainState == 'PlayerXToRespondToKan2':
                 if role==self._state.get('X',None):
@@ -435,7 +440,7 @@ class GameState:
                     actionType = action.get('Type',None)
                     if actionType=='Pass':
                         self._drawTile(oppoSeatID)
-                        self._setNewState({'Main':'PlayerXHandleDraw', 'X':1-role, 'IsKanDraw':True})
+                        self._setNewState(LastAction={'Main':'PlayerXDraw', 'X':1-role}, NewState={'Main':'PlayerXHandleDraw', 'X':1-role, 'IsKanDraw':True})
                         return True
                     elif actionType=='Ron':
                         val = action.get('Value', [])
@@ -455,7 +460,7 @@ class GameState:
                         logger.debug(f'sets={sets}')
                         if len(sets) != len(val)-1: return False
 
-                        self._setNewState({'Main':'PlayerXWon','X':role,'LastTile':self._state['Kan2Tile']})
+                        self._setNewState(LastAction={'Main':'PlayerXRon','X':role}, NewState={'Main':'PlayerXWon','X':role,'LastTile':self._state['Kan2Tile']})
                         self._updateMatchedPatterns(seatID,val)
                         return True
             return False
