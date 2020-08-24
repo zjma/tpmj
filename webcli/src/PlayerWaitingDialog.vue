@@ -17,6 +17,7 @@
 <script>
 import axios from 'axios';
 import * as styling from './PlayerAreaStyling.js';
+import * as SoundPlayer from './SoundPlayer.js';
 
 export default {
     name: 'PlayerWaitingDialog',
@@ -69,6 +70,7 @@ export default {
                     self.QueryPending = false;
                     var sub = response.data;
                     if (self.active && sub.GameID) {
+                        SoundPlayer.play('Attention');
                         self.GameID = sub.GameID;
                         self.RoleID = sub.Role;
                         self.Nextable = true;

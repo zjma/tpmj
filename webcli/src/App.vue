@@ -172,7 +172,6 @@ export default {
             this.RoleID = params.RoleID;
             this.MyRole = params.RoleID;
             this.State = 'Playing';
-            SoundPlayer.play('Attention');
         },
         onGameResultConfirmed(){
             window.console.log("Game result confirmed.");

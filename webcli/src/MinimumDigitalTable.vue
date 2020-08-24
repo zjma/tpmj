@@ -70,10 +70,11 @@
             <v-btn text small :disabled='!IsGameResultAvailable' @click='onClickGameResultButton'>本局得点</v-btn>
             <v-spacer/>
             <v-btn text small @click="onRuleBook">番种表</v-btn>
-            <v-btn text small>设置</v-btn>
+            <v-btn text small @click="onControlSettings">设置</v-btn>
         </v-footer>
         <result-dialog :active="ShowingResultDialog" :gameStateView='gameStateView' @done="onResultDialogClosing"></result-dialog>
         <rulebook-dialog :active="ShowingRuleBook" :content="ruleBookContent" @done="onExitFromRuleBook"></rulebook-dialog>
+        <!-- <control-settings-dialog :active="ShowingControlSettingsDialog" :ControlSettings='ControlSettings' @done="onExitFromControlSettingsDialog"></control-settings-dialog> -->
     </v-container>
 </template>
 
@@ -83,6 +84,7 @@ import * as Game2Utils from './game2.js';
 import * as styling from './PlayerAreaStyling.js';
 import GameResultDialog from './GameResultDialog.vue';
 import RuleBookDialog from './RuleBookDialog.vue';
+// import ControlSettingsDialog from './ControlSettingsDialog.vue';
 import TileViewRow from './TileViewRow.vue';
 import HandAndSetView from './HandAndSetView.vue';
 import * as SoundPlayer from './SoundPlayer.js';
@@ -92,6 +94,7 @@ export default {
     components : {
         'result-dialog' : GameResultDialog,
         'rulebook-dialog': RuleBookDialog,
+        // 'control-settings-dialog': ControlSettingsDialog,
         'TileViewRow' : TileViewRow,
         'HandAndSetView' : HandAndSetView,
     },
@@ -108,11 +111,15 @@ export default {
             gameStateView : Game2Utils.randGameStateView(),
             isGameStateViewValid : false,
             ShowingResultDialog : false,
-            ShowingActionDialog : false,
             ResultPrompted : false,
             ShowingRuleBook : false,
+            ShowingControlSettingsDialog : false,
             ruleBookContent : Game2Utils.PatternLibrary,
             AutoPass: true,
+            ControlSettings : {
+                AutoPassTimeLimitInSeconds : 0,
+            },
+            ManualActionRequired : true,
         };
     },
     computed: {
@@ -131,13 +138,21 @@ export default {
                     }
                 case 'PlayerXToRespondToDiscard':
                     if (this.gameStateView.State.X==this.RoleID){
-                        return '对手的弃牌! 如何应对?';
+                        if (this.ManualActionRequired) {
+                            return '对手的弃牌! 如何应对?';
+                        } else {
+                            return '对手的弃牌!';
+                        }
                     }else{
                         return `${this.gameStateView.PlayerNames[this.gameStateView.State.X]}思考中...`;
                     }
                 case 'PlayerXToRespondToKan2':
                     if (this.gameStateView.State.X==this.RoleID){
-                        return '这个加杠! 抢杠吗?'
+                        if (this.ManualActionRequired) {
+                            return '啊! 这个加杠! 抢杠吗?'
+                        } else {
+                            return '啊! 这个加杠!'
+                        }
                     }else{
                         return `${this.gameStateView.PlayerNames[this.gameStateView.State.X]}思考中...`;
                     }
@@ -228,9 +243,13 @@ export default {
         },
         ActionUiData: function(){
             window.console.log('MinimumDigitalTable.ActionUiData()');
-            var actions = Game2Utils.getAction(this.gameStateView, this.RoleID);
-            var result = actions.map(a => styling.getActionUIData(a));
-            return result;
+            if (this.ManualActionRequired) {
+                var actions = Game2Utils.getAction(this.gameStateView, this.RoleID);
+                var result = actions.map(a => styling.getActionUIData(a));
+                return result;
+            } else {
+                return [];
+            }
         },
     },
     mounted: function(){
@@ -257,7 +276,7 @@ export default {
                     self.QueryPending = false;
                     var sub = response.data;
                     if (self.active) {
-                        window.console.log(`[0823]SequenceNumber=${sub.SequenceNumber},LastAction=${sub.LastAction.Main}`);
+                        window.console.log(`SequenceNumber=${sub.SequenceNumber},LastAction=${sub.LastAction.Main},CurrentState=${sub.State.Main}`);
                         if (self.gameStateView.SequenceNumber != sub.SequenceNumber) {
                             if (sub.LastAction.Main=='PlayerXDraw') {
                                 SoundPlayer.play('DrewTile');
@@ -280,9 +299,21 @@ export default {
                             } else if (sub.LastAction.Main=='PlayerXRon') {
                                 SoundPlayer.play('Ron');
                             }
+                            window.console.log(`[0823] CurrentState=${sub.State.Main},X=${sub.State.X},thisRole=${self.RoleID}`);
+                            self.ManualActionRequired = true;
+                            if ((sub.State.Main=='PlayerXToRespondToDiscard'||sub.State.Main=='PlayerXToRespondToKan2')&&sub.State.X==self.RoleID) {
+                                var actions = Game2Utils.getAction(sub, self.RoleID);
+                                window.console.log(`[0823]actionCount=${actions.length}`);
+                                if (actions.length==1 && (actions[0].Type=='Pass'||actions[0].Type=='Draw')) {
+                                    self.onActionSelected(actions[0]);
+                                    self.ManualActionRequired = false;
+                                }
+                            }
                         }
+
                         self.gameStateView = sub;
                         self.isGameStateViewValid = true;
+
                         if (sub.State.Main=='PlayerXWon' || sub.State.Main=='Finished') {
                             self.onGameResultAvailable();
                         }
@@ -315,9 +346,14 @@ export default {
             this.ShowingRuleBook = true;
             SoundPlayer.play('NormalAction');
         },
-        onContrlSettings:function(){
-            window.console.log('MinimumDigitalTable.onContrlSettings()');
-            window.console.warn("onContrlSettings not implemented.");
+        onExitFromControlSettingsDialog:function(){
+            window.console.log('MinimumDigitalTable.onExitFromControlSettingsDialog()');
+            this.ShowingControlSettingsDialog = false;
+            SoundPlayer.play('NormalAction');
+        },
+        onControlSettings:function(){
+            window.console.log('MinimumDigitalTable.onControlSettings()');
+            this.ShowingControlSettingsDialog = true;
             SoundPlayer.play('NormalAction');
         },
         onGameResultAvailable:function(){
@@ -330,7 +366,6 @@ export default {
         onActionSelected:function(action){
             window.console.log('MinimumDigitalTable.onActionSelected()');
             window.console.log(action);
-            this.ShowingActionDialog = false;
 
             axios.post(this.ApiServerPlayUrl, {
                 Action:'PerformGameAction',
@@ -338,10 +373,6 @@ export default {
                 RoleID: this.RoleID,
                 Payload:action,
             });
-        },
-        onActionCancelled:function(){
-            window.console.log('MinimumDigitalTable.onActionCancelled()');
-            this.ShowingActionDialog = false;
         },
         onResultDialogClosing: function(){
             window.console.log('MinimumDigitalTable.onResultDialogClosing()');
