@@ -679,6 +679,72 @@ export const PatternLibrary = {
             ],
         },
     },
+    EastWindTriplet : {
+        Name:'门风·东',
+        Value:1,
+        Desc:'和牌时，身为东家，且有东风的刻/杠。',
+        Example:{
+            OldHand:[
+                {IsValueVisible:true,Value:40},
+                {IsValueVisible:true,Value:44},
+                {IsValueVisible:true,Value:48},
+                {IsValueVisible:true,Value:56},
+                {IsValueVisible:true,Value:60},
+                {IsValueVisible:true,Value:64},
+                {IsValueVisible:true,Value:68},
+            ],
+            NewHand:[
+                {IsValueVisible:true,Value:69},
+            ],
+            Set0:[
+                {IsValueVisible:true,Value:108},
+                {IsValueVisible:true,Value:109},
+                {IsValueVisible:true,Value:110},
+            ],
+            Set1:[
+                {IsValueVisible:true,Value:4},
+                {IsValueVisible:true,Value:5},
+                {IsValueVisible:true,Value:6},
+            ],
+            Set2:[
+            ],
+            Set3:[
+            ],
+        },
+    },
+    SouthWindTriplet : {
+        Name:'门风·南',
+        Value:1,
+        Desc:'和牌时，身为南家，且有南风的刻/杠。',
+        Example:{
+            OldHand:[
+                {IsValueVisible:true,Value:56},
+                {IsValueVisible:true,Value:60},
+                {IsValueVisible:true,Value:64},
+                {IsValueVisible:true,Value:68},
+                {IsValueVisible:true,Value:112},
+                {IsValueVisible:true,Value:113},
+                {IsValueVisible:true,Value:114},
+            ],
+            NewHand:[
+                {IsValueVisible:true,Value:69},
+            ],
+            Set0:[
+                {IsValueVisible:true,Value:40},
+                {IsValueVisible:true,Value:44},
+                {IsValueVisible:true,Value:48},
+            ],
+            Set1:[
+                {IsValueVisible:true,Value:4},
+                {IsValueVisible:true,Value:5},
+                {IsValueVisible:true,Value:6},
+            ],
+            Set2:[
+            ],
+            Set3:[
+            ],
+        },
+    },
     OneQuad : {
         Name:'单杠',
         Value:1,
@@ -769,6 +835,82 @@ export const PatternLibrary = {
         Name:'抢杠',
         Value:1,
         Desc:'和他人开小明杠的牌。',
+        Example:{
+            OldHand:[
+            ],
+            NewHand:[
+            ],
+            Set0:[
+            ],
+            Set1:[
+            ],
+            Set2:[
+            ],
+            Set3:[
+            ],
+        },
+    },
+    LastTileTsumo : {
+        Name:'海底捞月',
+        Value:1,
+        Desc:'以牌山最后一张牌自摸和牌。',
+        Example:{
+            OldHand:[
+            ],
+            NewHand:[
+            ],
+            Set0:[
+            ],
+            Set1:[
+            ],
+            Set2:[
+            ],
+            Set3:[
+            ],
+        },
+    },
+    LastTileRon : {
+        Name:'河底捞鱼',
+        Value:1,
+        Desc:'在牌山已耗尽时，由他人点炮和牌。',
+        Example:{
+            OldHand:[
+            ],
+            NewHand:[
+            ],
+            Set0:[
+            ],
+            Set1:[
+            ],
+            Set2:[
+            ],
+            Set3:[
+            ],
+        },
+    },
+    NoMelding: {
+        Name:'不求人',
+        Value:1,
+        Desc:'没有吃/碰/开大明杠/加杠，自摸和牌。（注：可以暗杠。）',
+        Example:{
+            OldHand:[
+            ],
+            NewHand:[
+            ],
+            Set0:[
+            ],
+            Set1:[
+            ],
+            Set2:[
+            ],
+            Set3:[
+            ],
+        },
+    },
+    AllMelding: {
+        Name:'全求人',
+        Value:1,
+        Desc:'4副面子都靠吃/碰/大明杠/加杠完成，由他人点炮和牌。',
         Example:{
             OldHand:[
             ],
@@ -1008,6 +1150,39 @@ export const PatternLibrary = {
                 {IsValueVisible:true,Value:73},
                 {IsValueVisible:true,Value:77},
                 {IsValueVisible:true,Value:81},
+            ],
+            Set2:[
+            ],
+            Set3:[
+            ],
+        },
+    },
+    AllHonors : {
+        Name:'字一色',
+        Value:3,
+        Desc:'和牌时，所有手牌都是字牌（东/南/西/北/白/发/中）。',
+        Example:{
+            OldHand:[
+                {IsValueVisible:true,Value:108},
+                {IsValueVisible:true,Value:109},
+                {IsValueVisible:true,Value:110},
+                {IsValueVisible:true,Value:112},
+                {IsValueVisible:true,Value:113},
+                {IsValueVisible:true,Value:114},
+                {IsValueVisible:true,Value:116},
+            ],
+            NewHand:[
+                {IsValueVisible:true,Value:117},
+            ],
+            Set0:[
+                {IsValueVisible:true,Value:124},
+                {IsValueVisible:true,Value:125},
+                {IsValueVisible:true,Value:126},
+            ],
+            Set1:[
+                {IsValueVisible:true,Value:128},
+                {IsValueVisible:true,Value:129},
+                {IsValueVisible:true,Value:130},
             ],
             Set2:[
             ],

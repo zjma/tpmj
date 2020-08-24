@@ -151,21 +151,27 @@ class Mountain:
         if j==0: return (i+1)%4,37
         return i,j-1
 class Set:
-    def __init__(self, tiles):
+    def __init__(self, tiles, type):
         self._tiles = sorted(tiles)
+        self._type = type
     def toSetView(self):
         return {
             'TileViews' : [{'IsValueVisible':True,'Value':tid} for tid in sorted(self._tiles)],
         }
-    def addTile(self, tid):
+    def kan2(self, tid):
+        if self._type!='Pon': return False
         self._tiles.append(tid)
         self._tiles.sort()
+        self._type = 'Kan2'
+        return True
     def isTriplet(self): return CheckTriplet(self._tiles)
     def isSequence(self): return CheckSequence(self._tiles)
     def isQuad(self): return CheckQuad(self._tiles)
     def getTiles(self): return self._tiles
     @property
     def tiles(self): return self._tiles
+    @property
+    def type(self): return self._type
 class GameState:
     def __init__(self, player0, player1):
         self._sequenceNumber = 0
@@ -186,6 +192,13 @@ class GameState:
             'IdenticalSequencesIV':6,
             'Rinshan':1,
             'RobKan':1,
+            'EastWindTriplet':1,
+            'SouthWindTriplet':1,
+            'AllMelding':1,
+            'NoMelding':1,
+            'AllHonors':3,
+            'LastTileTsumo':1,
+            'LastTileRon':1,
         }
 
         self._playerNames = [player0, player1]
@@ -317,7 +330,7 @@ class GameState:
                         logger.debug(f'MountainRemaining={len(self._mountain)}')
                         if len(self._mountain)<=0: return False
                         logger.debug('All check passed.')
-                        self._buildSet(seatID, sorted(tids))
+                        self._buildSet(seatID, sorted(tids), 'Kan0')
                         self._organizeHand(seatID)
                         self._drawTile(seatID)
                         self._setNewState(LastAction={'Main':'PlayerXKan0','X':role},NewState={'Main':'PlayerXHandleDraw', 'X':role, 'IsKanDraw':True})
@@ -346,7 +359,7 @@ class GameState:
                         if sid==None: return False
                         logger.debug('All checks passed.')
                         self._removeTile(tidToAddToSet)
-                        self._builtSets[seatID][sid].addTile(tidToAddToSet)
+                        assert self._builtSets[seatID][sid].kan2(tidToAddToSet)
                         self._organizeHand(seatID)
                         self._setNewState(LastAction={'Main':'PlayerXKan2','X':role},NewState={'Main':'PlayerXToRespondToKan2', 'X':1-role, 'Kan2Tile':tidToAddToSet})
                         return True
@@ -375,7 +388,7 @@ class GameState:
                         if len(tidSet&lastDiscardedSet)!=1: return False
                         if len(tidSet&oldHandSet)!=2: return False
                         #All checks pass.
-                        self._buildSet(seatID, sorted(tids))
+                        self._buildSet(seatID, sorted(tids), 'Pon')
                         self._setNewState(LastAction={'Main':'PlayerXPon','X':role}, NewState={'Main':'PlayerXHandleDraw','X':role})
                         return True
                     elif actionType=='Chi':
@@ -390,7 +403,7 @@ class GameState:
                         if len(tidSet&lastDiscardedSet)!=1: return False
                         if len(tidSet&oldHandSet)!=2: return False
                         #All checks pass.
-                        self._buildSet(seatID, sorted(tids))
+                        self._buildSet(seatID, sorted(tids), 'Chi')
                         self._setNewState(LastAction={'Main':'PlayerXChi', 'X':role}, NewState={'Main':'PlayerXHandleDraw', 'X':role})
                         return True
                     elif actionType=='Ron':
@@ -428,7 +441,7 @@ class GameState:
                         logger.debug(f'MountainRemaining={len(self._mountain)}')
                         if len(self._mountain)<=0: return False
                         #All checks pass.
-                        self._buildSet(seatID, sorted(tids))
+                        self._buildSet(seatID, sorted(tids), 'Kan1')
                         self._drawTile(seatID)
                         self._setNewState(LastAction={'Main':'PlayerXKan1', 'X':role}, NewState={'Main':'PlayerXHandleDraw', 'X':role, 'IsKanDraw':True})
                         return True
@@ -466,10 +479,10 @@ class GameState:
             return False
         finally:
             logger.info(f'NewState={self._state}')
-    def _buildSet(self, builderSeatID, tiles):
+    def _buildSet(self, builderSeatID, tiles, type):
         for tile in tiles:
             self._removeTile(tile)
-        self._builtSets[builderSeatID].append(Set(tiles))
+        self._builtSets[builderSeatID].append(Set(tiles,type))
     def _removeTile(self, tid):
         '''
         Remove a given tile from whatever hand/river it is in currently.
@@ -557,6 +570,14 @@ class GameState:
                 return True
         return False
 
+    def _checkEastWindTriplet(self, seatID, handGroups):
+        tileGroups = handGroups + [set.getTiles() for set in self._builtSets[seatID]]
+        return seatID==0 and any((CheckTriplet(tileGroup, ReturnTGID=True)==27 or CheckQuad(tileGroup, ReturnTGID=True)==27) for tileGroup in tileGroups)
+
+    def _checkSouthWindTriplet(self, seatID, handGroups):
+        tileGroups = handGroups + [set.getTiles() for set in self._builtSets[seatID]]
+        return seatID==1 and any((CheckTriplet(tileGroup, ReturnTGID=True)==28 or CheckQuad(tileGroup, ReturnTGID=True)==28) for tileGroup in tileGroups)
+
     def _checkAllTriplets(self, seatID, handGroups):
         tileGroups = handGroups + [set.getTiles() for set in self._builtSets[seatID]]
         return len([0 for tileGroup in tileGroups if CheckTriplet(tileGroup) or CheckQuad(tileGroup)])==4
@@ -579,6 +600,20 @@ class GameState:
         logger.debug(f'count={count},countMan={countMan},countSout={countSou},countPin={countPin}')
 
         return count in [countMan,countSou,countPin]
+
+    def _checkAllHonors(self, seatID, handGroups):
+        logger.debug(f'checking AllHonors')
+        allTiles = []
+
+        for handGroup in handGroups:
+            allTiles += handGroup
+
+        for builtSet in self._builtSets[seatID]:
+            allTiles += builtSet.getTiles()
+
+        count = len(allTiles)
+        countHonors = len([tile for tile in allTiles if tile//4 in range(27,34)])
+        return count == countHonors
 
     def _checkIdenticalSequencesI(self, seatID, handGroups):
         tileGroups = handGroups + [set.getTiles() for set in self._builtSets[seatID]]
@@ -630,6 +665,27 @@ class GameState:
 
     def _checkRobKan(self, seatID, handGroups):
         return self._previousState and self._previousState.get('Main',None)=='PlayerXToRespondToKan2' and self._previousState.get('X',None)==self._getRoleBySeatID(seatID)
+
+    def _checkLastTileTsumo(self, seatID, handGroups):
+        logger.debug(f'Checking LastTileTsumo.')
+        isTsumo = self._previousState.get('Main',None) == 'PlayerXHandleDraw'
+        logger.debug(f'mountainCount={len(self._mountain)}')
+        return isTsumo and len(self._mountain)==0
+    def _checkLastTileRon(self, seatID, handGroups):
+        logger.debug(f'Checking LastTileRon.')
+        isRon = self._previousState.get('Main',None) in ('PlayerXToRespondToDiscard','PlayerXToRespondToKan2')
+        logger.debug(f'mountainCount={len(self._mountain)}')
+        return isRon and len(self._mountain)==0
+    def _checkNoMelding(self, seatID, handGroups):
+        isTsumo = self._previousState.get('Main',None) == 'PlayerXHandleDraw'
+        meldedSets = [built for built in self._builtSets[seatID] if built.type in ('Pon','Chi','Kan1','Kan2')]
+        return isTsumo and len(meldedSets)==0
+    def _checkAllMelding(self, seatID, handGroups):
+        logger.debug('Checking AllMelding.')
+        isRon = self._previousState.get('Main',None) in ('PlayerXToRespondToDiscard','PlayerXToRespondToKan2')
+        meldedSets = [built for built in self._builtSets[seatID] if built.type in ('Pon','Chi','Kan1','Kan2')]
+        logger.debug(f'isRon={isRon},meldedSets={meldedSets}')
+        return isRon and len(meldedSets)==4
 
     def edit(self, request):
         logger.debug(f"Handling Edit request: {request}")
