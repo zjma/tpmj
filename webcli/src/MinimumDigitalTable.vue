@@ -119,11 +119,7 @@ export default {
             ShowingRuleBook : false,
             ShowingSettingsDialog : false,
             ruleBookContent : Game2Utils.PatternLibrary,
-            Settings : {
-                AutoSkip : true,//Auto-skip when current player needs to respond to other player's discard/Kan2 and the only possible move is to skip.
-                BgmOn : true,
-                SoundEffectOn : true,
-            },
+            Settings : this.GetSettingsFromStorage(),
         };
     },
     computed: {
@@ -374,6 +370,7 @@ export default {
                 this.stopBGM();
             }
             this.Settings = newSettings;
+            this.SaveSettingsToStorage();
         },
         onOpeningSettings:function(){
             window.console.log('MinimumDigitalTable.onOpeningSettings()');
@@ -407,10 +404,33 @@ export default {
             this.ShowingResultDialog = true;
         },
         startBGM:function(){
-            document.getElementById('BGM').play();
+            if (this.Settings.BgmOn) {
+                document.getElementById('BGM').play();
+            }
         },
         stopBGM:function(){
             document.getElementById('BGM').pause();
+        },
+        SaveSettingsToStorage:function(){
+            localStorage.setItem('GameSettings',JSON.stringify(this.Settings));
+        },
+        GetSettingsFromStorage:function(){
+            try {
+                var obj = JSON.parse(localStorage.getItem('GameSettings'));
+                if (obj) {
+                    return obj;
+                } else {
+                    return {
+                        BgmOn : true,
+                        SoundEffectOn : true,
+                        AutoSkip : true,
+                    };
+                }
+            } catch (error) {
+                window.console.warn("Unable to get settings from storage.");
+                window.console.warn(error);
+                return {};
+            }
         }
     },
 }
